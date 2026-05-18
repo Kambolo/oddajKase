@@ -1,3 +1,15 @@
+
+  # Dasboard
+
+  This is a code bundle for OddajKase dashboards. The original project is available at https://www.figma.com/design/bR6ebiYDg9SBekyvRQFkID/Expense-Dashboard-with-Modal.
+
+  ## Running the code
+
+  Run `npm i` to install the dependencies.
+
+  Run `npm run dev` to start the development server.
+  
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
