@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import SideBar from "../components/layout/common/SideBar";
-import GroupCard from "../components/groups/GroupCard";
 import AddGroupModal from "../components/groups/AddGroupModal";
 import EditGroupMembersModal from "../components/groups/EditGroupMembersModal";
+import GroupCard from "../components/groups/GroupCard";
 import GroupSummaryModal from "../components/groups/GroupSummaryModal";
+import SideBar from "../components/layout/common/SideBar";
+import TopBar from "../components/layout/common/TopBar";
 
 const contacts = [
   { id: "c1", name: "Anna Kowalska", email: "anna@example.com" },
@@ -27,7 +28,10 @@ const formatMoney = (value: number) => {
 };
 
 const getGroupBalance = (group: Group) => {
-  const total = Object.values(group.memberBalances).reduce((sum, value) => sum + value, 0);
+  const total = Object.values(group.memberBalances).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
   return formatMoney(total);
 };
 
@@ -60,9 +64,12 @@ export default function GroupPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [summaryGroupId, setSummaryGroupId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const editingGroup = groups.find((group) => group.id === editingGroupId) ?? null;
-  const summaryGroup = groups.find((group) => group.id === summaryGroupId) ?? null;
+  const editingGroup =
+    groups.find((group) => group.id === editingGroupId) ?? null;
+  const summaryGroup =
+    groups.find((group) => group.id === summaryGroupId) ?? null;
 
   const handleCreateGroup = (name: string, memberIds: string[]) => {
     const nextGroup: Group = {
@@ -80,22 +87,20 @@ export default function GroupPage() {
     setGroups((current) =>
       current.map((group) => {
         if (group.id !== editingGroup.id) return group;
-        const newBalances = memberIds.reduce((acc, id) => {
-          acc[id] = group.memberBalances[id] ?? 0;
-          return acc;
-        }, {} as Record<string, number>);
+        const newBalances = memberIds.reduce(
+          (acc, id) => {
+            acc[id] = group.memberBalances[id] ?? 0;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
         return { ...group, memberIds, memberBalances: newBalances };
       }),
     );
   };
 
-  const openEditMembers = (groupId: string) => {
-    setEditingGroupId(groupId);
-  };
-
-  const openSummary = (groupId: string) => {
-    setSummaryGroupId(groupId);
-  };
+  const openEditMembers = (groupId: string) => setEditingGroupId(groupId);
+  const openSummary = (groupId: string) => setSummaryGroupId(groupId);
 
   const handleDeleteGroup = (groupId: string) => {
     setGroups((current) => current.filter((group) => group.id !== groupId));
@@ -104,50 +109,65 @@ export default function GroupPage() {
   };
 
   const memberNames = useMemo(
-    () =>
-      (group: Group) =>
-        group.memberIds
-          .map((id) => contacts.find((contact) => contact.id === id)?.name ?? "")
-          .filter(Boolean),
+    () => (group: Group) =>
+      group.memberIds
+        .map((id) => contacts.find((contact) => contact.id === id)?.name ?? "")
+        .filter(Boolean),
     [],
   );
+
+  const filteredGroups = useMemo(() => {
+    return groups.filter((group) =>
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [groups, searchQuery]);
 
   return (
     <div className="flex h-dvh min-h-screen bg-brand">
       <SideBar onAction={() => setIsAddOpen(true)} actionLabel="Add group" />
-      <div className="flex-1 p-6">
-        <div className="max-w-7xl space-y-6">
-          <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-semibold text-text">Groups</h1>
-                <p className="mt-2 max-w-2xl text-sm text-text/70">
-                  Manage your groups and pick who participates in each shared expense.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddOpen(true)}
-                className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
-              >
-                + Add group
-              </button>
-            </div>
-          </section>
 
-          <section className="grid gap-6 xl:grid-cols-3">
-            {groups.map((group) => (
-              <GroupCard
-                key={group.id}
-                name={group.name}
-                amount={getGroupBalance(group)}
-                members={memberNames(group)}
-                onViewSummary={() => openSummary(group.id)}
-                onEdit={() => openEditMembers(group.id)}
-                onDelete={() => handleDeleteGroup(group.id)}
-              />
-            ))}
-          </section>
+      {/* Right side: TopBar + scrollable content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <TopBar
+          searchPlaceholder="Search groups..."
+          onSearch={setSearchQuery}
+        />
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-7xl space-y-6">
+            <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h1 className="text-3xl font-semibold text-text">Groups</h1>
+                  <p className="mt-2 max-w-2xl text-sm text-text/70">
+                    Manage your groups and pick who participates in each shared
+                    expense.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(true)}
+                  className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  + Add group
+                </button>
+              </div>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-3">
+              {filteredGroups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  name={group.name}
+                  amount={getGroupBalance(group)}
+                  members={memberNames(group)}
+                  onViewSummary={() => openSummary(group.id)}
+                  onEdit={() => openEditMembers(group.id)}
+                  onDelete={() => handleDeleteGroup(group.id)}
+                />
+              ))}
+            </section>
+          </div>
         </div>
       </div>
 
