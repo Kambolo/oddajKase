@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import AddGroupModal from "../components/groups/AddGroupModal";
 import EditGroupMembersModal from "../components/groups/EditGroupMembersModal";
 import GroupCard from "../components/groups/GroupCard";
 import GroupSummaryModal from "../components/groups/GroupSummaryModal";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
+import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
 
 const contacts = [
   { id: "c1", name: "Anna Kowalska", email: "anna@example.com" },
@@ -60,11 +63,17 @@ const initialGroups: Group[] = [
 ];
 
 export default function GroupPage() {
+  const location = useLocation();
   const [groups, setGroups] = useState<Group[]>(initialGroups);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [summaryGroupId, setSummaryGroupId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    initGoogleAnalytics();
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   const editingGroup =
     groups.find((group) => group.id === editingGroupId) ?? null;

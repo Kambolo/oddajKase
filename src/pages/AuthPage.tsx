@@ -2,6 +2,9 @@ import ForgotPasswordForm from "../components/forms/ForgotPasswordForm";
 import RegisterForm from "../components/forms/RegisterForm";
 import SignInForm from "../components/forms/SignInForm";
 import AuthLayout from "../components/layout/auth/AuthLayout";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
 
 type AuthPageProps = {
   initialMode?: "signin" | "register" | "forgot";
@@ -17,6 +20,13 @@ const headings = {
 };
 
 export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
+  const location = useLocation();
+
+  useEffect(() => {
+    initGoogleAnalytics();
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
   return (
     <AuthLayout initialMode={initialMode}>
       {(mode, setMode) => {

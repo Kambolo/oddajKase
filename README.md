@@ -17,7 +17,25 @@ The project is configured for Netlify deployment.
 2. Use `npm run build` as the build command.
 3. Use `dist` as the publish directory.
 4. Keep the SPA redirect in `netlify.toml` so React Router routes work after refresh.
-  
+
+## Environment variables
+
+Create a `.env` file based on [`.example.env`](./.example.env) and set:
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_GA_MEASUREMENT_ID`
+
+## Google Analytics
+
+1. Create a GA4 property in Google Analytics.
+2. Copy the Measurement ID in the format `G-XXXXXXXXXX`.
+3. Set `VITE_GA_MEASUREMENT_ID` locally and in Netlify environment variables.
+4. After deploy, page views are tracked automatically on the main routes.
 
 # React + TypeScript + Vite
 

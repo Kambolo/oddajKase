@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Modal from "../components/common/Modal";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import NewExpenseModal from "../components/dashboard/NewExpenseModal";
 import SummaryCards from "../components/dashboard/SummaryCards";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
+import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
 
 type Contact = {
   id: string;
@@ -105,9 +108,15 @@ const cardData: SummaryCard[] = [
 ];
 
 export default function DashboardPage() {
+  const location = useLocation();
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SummaryCard | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    initGoogleAnalytics();
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   const transactions = useMemo(
     () => [
