@@ -1,9 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import { AuthProvider } from "./context/AuthContext.tsx";
+import "./index.css";
+import SignInPage from "./pages/AuthPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
-import SignInPage from "./pages/SignInPage.tsx";
 import GroupPage from "./pages/GroupPage.tsx";
 
 const router = createBrowserRouter([
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
     element: <SignInPage />,
   },
   {
+    path: "/signup",
+    element: <SignInPage initialMode="register" />,
+  },
+  {
     path: "/groups",
     element: <GroupPage />,
   },
@@ -23,6 +28,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 );
