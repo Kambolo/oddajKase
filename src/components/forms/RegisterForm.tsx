@@ -52,10 +52,8 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const [loading, setLoading] = useState(false);
   const [firebaseError, setFirebaseError] = useState("");
 
   const touch = (field: string) =>
@@ -71,11 +69,9 @@ export default function RegisterForm() {
     };
     setTouched(allTouched);
     const errs = validate(name, email, password, confirm);
-    setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
     setFirebaseError("");
-    setLoading(true);
     try {
       const { user } = await createUserWithEmailAndPassword(
         auth,
@@ -90,8 +86,6 @@ export default function RegisterForm() {
       setPassword("");
       setConfirm("");
       setTouched({});
-    } finally {
-      setLoading(false);
     }
   };
 

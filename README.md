@@ -5,9 +5,18 @@
 
   ## Running the code
 
-  Run `npm i` to install the dependencies.
+Run `npm i` to install the dependencies.
 
-  Run `npm run dev` to start the development server.
+Run `npm run dev` to start the development server.
+
+## Deploy on Netlify
+
+The project is configured for Netlify deployment.
+
+1. Connect the repository in Netlify.
+2. Use `npm run build` as the build command.
+3. Use `dist` as the publish directory.
+4. Keep the SPA redirect in `netlify.toml` so React Router routes work after refresh.
   
 
 # React + TypeScript + Vite
