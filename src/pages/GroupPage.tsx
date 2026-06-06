@@ -8,67 +8,30 @@ import GroupSummaryModal from "../components/groups/GroupSummaryModal";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
 import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
-
-const contacts = [
-  { id: "c1", name: "Anna Kowalska", email: "anna@example.com" },
-  { id: "c2", name: "Jan Nowak", email: "jan@example.com" },
-  { id: "c3", name: "Marta Wiśniewska", email: "marta@example.com" },
-  { id: "c4", name: "Tomasz Zieliński", email: "tomasz@example.com" },
-  { id: "c5", name: "Agnieszka Mazur", email: "agnieszka@example.com" },
-];
-
-type Group = {
-  id: string;
-  name: string;
-  balance: string;
-  memberIds: string[];
-  memberBalances: Record<string, number>;
-};
-
-const formatMoney = (value: number) => {
-  const prefix = value < 0 ? "-" : "";
-  return `${prefix}€${Math.abs(value).toFixed(2)}`;
-};
+import { useAppSelector, useAppDispatch } from "../store/store";
+import { addGroup, updateGroupMembers, deleteGroup } from "../store/dataSlice";
+import type { Group } from "../lib/types";
+import { formatMoney } from "../util/utils";
 
 const getGroupBalance = (group: Group) => {
-  const total = Object.values(group.memberBalances).reduce(
+  const total = Object.values(group.memberBalances!).reduce(
     (sum, value) => sum + value,
     0,
   );
   return formatMoney(total);
 };
 
-const initialGroups: Group[] = [
-  {
-    id: "g1",
-    name: "Weekend trip",
-    balance: "€260.50",
-    memberIds: ["c1", "c2", "c3"],
-    memberBalances: { c1: -40.5, c2: 20.0, c3: 20.5 },
-  },
-  {
-    id: "g2",
-    name: "Office lunch",
-    balance: "€-70.20",
-    memberIds: ["c2", "c4"],
-    memberBalances: { c2: -35.1, c4: -35.1 },
-  },
-  {
-    id: "g3",
-    name: "Charity gift",
-    balance: "€120.00",
-    memberIds: ["c1", "c5", "c3"],
-    memberBalances: { c1: 40.0, c5: 40.0, c3: 40.0 },
-  },
-];
-
 export default function GroupPage() {
   const location = useLocation();
-  const [groups, setGroups] = useState<Group[]>(initialGroups);
+  const dispatch = useAppDispatch();
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [summaryGroupId, setSummaryGroupId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const contacts = useAppSelector((state) => state.data.contacts);
+  const groups = useAppSelector((state) => state.data.groups);
 
   useEffect(() => {
     initGoogleAnalytics();
@@ -81,38 +44,20 @@ export default function GroupPage() {
     groups.find((group) => group.id === summaryGroupId) ?? null;
 
   const handleCreateGroup = (name: string, memberIds: string[]) => {
-    const nextGroup: Group = {
-      id: `g${Date.now()}`,
-      name,
-      balance: "€0.00",
-      memberIds,
-      memberBalances: memberIds.reduce((acc, id) => ({ ...acc, [id]: 0 }), {}),
-    };
-    setGroups((current) => [nextGroup, ...current]);
+    dispatch(addGroup({ name, memberIds }));
+    setIsAddOpen(false);
   };
 
   const handleSaveMembers = (memberIds: string[]) => {
     if (!editingGroup) return;
-    setGroups((current) =>
-      current.map((group) => {
-        if (group.id !== editingGroup.id) return group;
-        const newBalances = memberIds.reduce(
-          (acc, id) => {
-            acc[id] = group.memberBalances[id] ?? 0;
-            return acc;
-          },
-          {} as Record<string, number>,
-        );
-        return { ...group, memberIds, memberBalances: newBalances };
-      }),
-    );
+    dispatch(updateGroupMembers({ groupId: editingGroup.id, memberIds }));
   };
 
   const openEditMembers = (groupId: string) => setEditingGroupId(groupId);
   const openSummary = (groupId: string) => setSummaryGroupId(groupId);
 
   const handleDeleteGroup = (groupId: string) => {
-    setGroups((current) => current.filter((group) => group.id !== groupId));
+    dispatch(deleteGroup(groupId));
     if (summaryGroupId === groupId) setSummaryGroupId(null);
     if (editingGroupId === groupId) setEditingGroupId(null);
   };
@@ -122,7 +67,7 @@ export default function GroupPage() {
       group.memberIds
         .map((id) => contacts.find((contact) => contact.id === id)?.name ?? "")
         .filter(Boolean),
-    [],
+    [contacts],
   );
 
   const filteredGroups = useMemo(() => {
@@ -135,7 +80,6 @@ export default function GroupPage() {
     <div className="flex h-dvh min-h-screen bg-brand">
       <SideBar onAction={() => setIsAddOpen(true)} actionLabel="Add group" />
 
-      {/* Right side: TopBar + scrollable content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar
           searchPlaceholder="Search groups..."
@@ -204,7 +148,7 @@ export default function GroupPage() {
           groupName={summaryGroup.name}
           balance={getGroupBalance(summaryGroup)}
           contacts={contacts}
-          memberBalances={summaryGroup.memberBalances}
+          memberBalances={summaryGroup.memberBalances!}
           onClose={() => setSummaryGroupId(null)}
         />
       )}

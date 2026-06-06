@@ -46,7 +46,10 @@ export default function EditGroupMembersModal({
       }
     >
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Toggle members from your contact list. Checked contacts are included in this group.</p>
+        <p className="text-sm text-slate-600">
+          Toggle members from your contact list. Checked contacts are included
+          in this group.
+        </p>
         <div className="grid gap-2 max-h-72 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3">
           {contacts.map((contact) => (
             <label
