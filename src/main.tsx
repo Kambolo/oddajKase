@@ -6,6 +6,8 @@ import "./index.css";
 import SignInPage from "./pages/AuthPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
 import GroupPage from "./pages/GroupPage.tsx";
+import { store } from "./store/store.ts";
+import { Provider } from "react-redux";
 
 const router = createBrowserRouter([
   {
@@ -28,8 +30,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <Provider store={store}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </Provider>
   </StrictMode>,
 );

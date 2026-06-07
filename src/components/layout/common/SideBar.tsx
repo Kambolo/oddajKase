@@ -18,44 +18,15 @@ export default function SideBar({
   const groupsActive = location.pathname === "/groups";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        width: 224,
-        background: "#f2f5f3",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      {/* Google Fonts */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
-      `}</style>
-
+    <div className="flex h-full w-56 flex-col bg-[#f2f5f3] font-sans">
       {/* Logo / Title */}
       <SideBarTitle />
 
       {/* Divider */}
-      <div
-        style={{
-          height: 1,
-          background: "#dde7e2",
-          margin: "0 16px 14px",
-          borderRadius: 1,
-        }}
-      />
+      <div className="mx-4 mb-3.5 h-px rounded bg-[#dde7e2]" />
 
       {/* Nav Links */}
-      <div
-        style={{
-          flex: 1,
-          padding: "0 10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
-      >
+      <div className="flex flex-1 flex-col gap-1 px-2.5">
         <SideBarLink
           to="/dashboard"
           name="Dashboard"
@@ -69,47 +40,12 @@ export default function SideBar({
       </div>
 
       {/* New Expense CTA */}
-      <div style={{ padding: "16px 16px 24px" }}>
+      <div className="px-4 pb-6 pt-4">
         <button
           onClick={onAction}
-          style={{
-            width: "100%",
-            padding: "13px 0",
-            borderRadius: 50,
-            background: "#6b9e8a",
-            color: "#f0f5f2",
-            fontFamily: "'DM Sans', sans-serif",
-            fontWeight: 600,
-            fontSize: 14,
-            border: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 7,
-            letterSpacing: "-0.1px",
-            boxShadow: "0 2px 12px rgba(107, 158, 138, 0.28)",
-            transition: "background 0.18s, box-shadow 0.18s, transform 0.12s",
-          }}
-          onMouseEnter={(e) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.background = "#5f8c7a";
-            btn.style.boxShadow = "0 4px 18px rgba(107, 158, 138, 0.38)";
-          }}
-          onMouseLeave={(e) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.background = "#6b9e8a";
-            btn.style.boxShadow = "0 2px 12px rgba(107, 158, 138, 0.28)";
-          }}
-          onMouseDown={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform =
-              "scale(0.97)";
-          }}
-          onMouseUp={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-          }}
+          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-accent-dark py-3.25 text-sm font-semibold tracking-tight text-text-light transition-all hover:bg-accent-dark/90 cursor-pointer"
         >
-          <span style={{ fontSize: 18, lineHeight: 1, marginTop: -1 }}>+</span>
+          <span className="text-lg leading-none -mt-0.5">+</span>
           {actionLabel}
         </button>
       </div>

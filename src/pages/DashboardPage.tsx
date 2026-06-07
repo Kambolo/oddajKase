@@ -8,115 +8,63 @@ import SummaryCards from "../components/dashboard/SummaryCards";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
 import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
-
-type Contact = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-type Group = {
-  id: string;
-  name: string;
-  memberIds: string[];
-};
-
-const contacts: Contact[] = [
-  { id: "c1", name: "Anna Kowalska", email: "anna@example.com" },
-  { id: "c2", name: "Jan Nowak", email: "jan@example.com" },
-  { id: "c3", name: "Marta Wiśniewska", email: "marta@example.com" },
-  { id: "c4", name: "Tomasz Zieliński", email: "tomasz@example.com" },
-];
-
-const groups: Group[] = [
-  { id: "g1", name: "Weekend trip", memberIds: ["c1", "c2", "c3"] },
-  { id: "g2", name: "Office lunch", memberIds: ["c2", "c4"] },
-  { id: "g3", name: "Charity gift", memberIds: ["c1", "c3", "c4"] },
-];
-
-type SummaryItem = {
-  label: string;
-  amount: number;
-  meta?: string;
-};
-
-type SummaryCard = {
-  id: string;
-  title: string;
-  value: string;
-  subtitle: string;
-  description: string;
-  details: SummaryItem[];
-};
-
-const balanceDetails: SummaryItem[] = [
-  { label: "Anna Kowalska", amount: -35.2, meta: "You owe" },
-  { label: "Jan Nowak", amount: 15.0, meta: "Owes you" },
-  { label: "Marta Wiśniewska", amount: 20.0, meta: "Owes you" },
-  { label: "Tomasz Zieliński", amount: -45.5, meta: "You owe" },
-];
-
-const expenseDetails: SummaryItem[] = [
-  { label: "Lunch with friends", amount: 24.5, meta: "to Jan Nowak" },
-  { label: "Train ticket", amount: 18.2, meta: "to Marta Wiśniewska" },
-  { label: "Office snacks", amount: 12.0, meta: "to Tomek" },
-];
-
-const incomeDetails: SummaryItem[] = [
-  { label: "Agnieszka Mazur", amount: 50.0, meta: "Paid back" },
-  { label: "Jan Nowak", amount: 20.0, meta: "Paid back" },
-  { label: "Marta Wiśniewska", amount: 15.5, meta: "Paid back" },
-];
-
-const formatMoney = (value: number) => {
-  const sign = value < 0 ? "-" : "";
-  return `${sign}€${Math.abs(value).toFixed(2)}`;
-};
-
-const cardData: SummaryCard[] = [
-  {
-    id: "balance",
-    title: "Balance",
-    value: formatMoney(
-      balanceDetails.reduce((sum, item) => sum + item.amount, 0),
-    ),
-    subtitle: "Available",
-    description:
-      "See the balance for each group member and how much they owe or are owed.",
-    details: balanceDetails,
-  },
-  {
-    id: "expenses",
-    title: "Expenses",
-    value: formatMoney(
-      expenseDetails.reduce((sum, item) => sum + item.amount, 0),
-    ),
-    subtitle: "This month",
-    description: "The latest expenses that you still owe to other people.",
-    details: expenseDetails,
-  },
-  {
-    id: "income",
-    title: "Income",
-    value: formatMoney(
-      incomeDetails.reduce((sum, item) => sum + item.amount, 0),
-    ),
-    subtitle: "Total",
-    description: "People who already paid you back and how much they returned.",
-    details: incomeDetails,
-  },
-];
+import { useAppSelector } from "../store/store";
+import type { SummaryCard } from "../lib/types";
+import { formatMoney } from "../util/utils";
 
 export default function DashboardPage() {
   const location = useLocation();
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SummaryCard | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const groups = useAppSelector((state) => state.data.groups);
+  const contacts = useAppSelector((state) => state.data.contacts);
+  const balanceDetails = useAppSelector((state) => state.data.balanceDetails);
+  const incomeDetails = useAppSelector((state) => state.data.incomeDetails);
+  const expenseDetails = useAppSelector((state) => state.data.expenseDetails);
 
   useEffect(() => {
     initGoogleAnalytics();
     trackPageView(location.pathname);
   }, [location.pathname]);
+
+  const cardData: SummaryCard[] = useMemo(
+    () => [
+      {
+        id: "balance",
+        title: "Balance",
+        value: formatMoney(
+          balanceDetails.reduce((sum, item) => sum + item.amount, 0),
+        ),
+        subtitle: "Available",
+        description:
+          "See the balance for each group member and how much they owe or are owed.",
+        details: balanceDetails,
+      },
+      {
+        id: "expenses",
+        title: "Expenses",
+        value: formatMoney(
+          expenseDetails.reduce((sum, item) => sum + item.amount, 0),
+        ),
+        subtitle: "This month",
+        description: "The latest expenses that you still owe to other people.",
+        details: expenseDetails,
+      },
+      {
+        id: "income",
+        title: "Income",
+        value: formatMoney(
+          incomeDetails.reduce((sum, item) => sum + item.amount, 0),
+        ),
+        subtitle: "Total",
+        description:
+          "People who already paid you back and how much they returned.",
+        details: incomeDetails,
+      },
+    ],
+    [balanceDetails, incomeDetails, expenseDetails],
+  );
 
   const transactions = useMemo(
     () => [
