@@ -7,9 +7,10 @@ export type Contact = {
 export type Group = {
   id: string;
   name: string;
+  balance: string;
   memberIds: string[];
-  balance?: string;
   memberBalances?: Record<string, number>;
+  inviteCode?: string;
 };
 
 // type Group = {

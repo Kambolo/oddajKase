@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Modal from "../components/common/Modal";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
@@ -8,8 +7,8 @@ import SummaryCards from "../components/dashboard/SummaryCards";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
 import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
-import { useAppSelector } from "../store/store";
 import type { SummaryCard } from "../lib/types";
+import { useAppSelector } from "../store/store";
 import { formatMoney } from "../util/utils";
 
 export default function DashboardPage() {

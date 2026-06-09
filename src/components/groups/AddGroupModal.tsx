@@ -1,103 +1,124 @@
 import { useState } from "react";
 import Modal from "../common/Modal";
 
-type Contact = {
-  id: string;
-  name: string;
-  email: string;
-};
-
 type Props = {
   open: boolean;
-  contacts: Contact[];
   onClose: () => void;
-  onCreate: (groupName: string, memberIds: string[]) => void;
+  onCreate: (groupName: string, inviteCode: string) => void;
 };
 
-export default function AddGroupModal({
-  open,
-  contacts,
-  onClose,
-  onCreate,
-}: Props) {
-  const [name, setName] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+function generateCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
-  const toggleContact = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
+export default function AddGroupModal({ open, onClose, onCreate }: Props) {
+  const [name, setName] = useState("");
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [createdName, setCreatedName] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    onCreate(name.trim(), selectedIds);
+    const code = generateCode();
+    setCreatedName(name.trim());
+    setCreatedCode(code);
+    onCreate(name.trim(), code);
+  };
+
+  const handleCopy = () => {
+    if (!createdCode) return;
+    navigator.clipboard.writeText(createdCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleClose = () => {
     setName("");
-    setSelectedIds([]);
+    setCreatedCode(null);
+    setCreatedName("");
+    setCopied(false);
     onClose();
   };
 
   return (
     <Modal
       open={open}
-      title="Add group"
-      onClose={onClose}
+      title={createdCode ? "Group created!" : "Add group"}
+      onClose={handleClose}
       footer={
-        <div className="flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleCreate}
-            className="rounded-full bg-[#4E635A] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3f5149] cursor-pointer transition-all"
-          >
-            Create group
-          </button>
-        </div>
+        createdCode ? (
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary/90 cursor-pointer transition-all"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="rounded-full border border-slate-300 px-5 py-3 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={!name.trim()}
+              className="text-text-light transition-all hover:bg-accent-dark/90 items-center justify-center rounded-full bg-accent-dark px-5 py-3 text-sm font-semibold  hover:bg-primary/90 cursor-pointer"
+            >
+              Create group
+            </button>
+          </div>
+        )
       }
     >
-      <div className="grid gap-5">
-        <label className="grid gap-2 text-sm text-slate-700">
-          Group name
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Weekend trip"
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
-          />
-        </label>
-        <div>
-          <div className="mb-3 text-sm font-semibold text-slate-800">
-            Add people from contacts
+      {createdCode ? (
+        <div className="grid gap-5">
+          <p className="text-sm text-slate-600">
+            Share this code with people you want to invite to{" "}
+            <span className="font-semibold text-slate-800">{createdName}</span>.
+          </p>
+          <div className="flex flex-col items-center gap-4 rounded-3xl bg-slate-50 border border-slate-200 px-6 py-8">
+            <div className="text-xs uppercase tracking-widest text-slate-400">
+              Invite code
+            </div>
+            <div className="text-4xl font-bold tracking-[0.2em] text-primary font-mono">
+              {createdCode}
+            </div>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="mt-1 rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 cursor-pointer transition-all"
+            >
+              {copied ? "Copied!" : "Copy code"}
+            </button>
           </div>
-          <div className="grid gap-2 max-h-64 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3">
-            {contacts.map((contact) => (
-              <label
-                key={contact.id}
-                className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 transition hover:bg-slate-100"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(contact.id)}
-                  onChange={() => toggleContact(contact.id)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                />
-                <div>
-                  <div className="font-medium text-slate-900">
-                    {contact.name}
-                  </div>
-                  <div className="text-sm text-slate-500">{contact.email}</div>
-                </div>
-              </label>
-            ))}
-          </div>
+          <p className="text-xs text-slate-400 text-center">
+            This code is also shown on the group card.
+          </p>
         </div>
-      </div>
+      ) : (
+        <div className="grid gap-5">
+          <label className="grid gap-2 text-sm text-slate-700">
+            Group name
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Weekend trip"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
+            />
+          </label>
+          <p className="text-sm text-slate-500 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
+            After creating the group you'll receive an invite code to share with
+            others.
+          </p>
+        </div>
+      )}
     </Modal>
   );
 }

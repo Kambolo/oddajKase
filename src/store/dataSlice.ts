@@ -1,5 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import type { Contact, Group, SummaryItem } from "../lib/types";
 
 const balanceDetails: SummaryItem[] = [
@@ -36,6 +36,7 @@ const groups: Group[] = [
     memberIds: ["c1", "c2", "c3"],
     balance: "€260.50",
     memberBalances: { c1: -40.5, c2: 20.0, c3: 20.5 },
+    inviteCode: "ABC123",
   },
   {
     id: "g2",
@@ -43,6 +44,7 @@ const groups: Group[] = [
     memberIds: ["c2", "c4"],
     balance: "€-70.20",
     memberBalances: { c2: -35.1, c4: -35.1 },
+    inviteCode: "XYZ789",
   },
   {
     id: "g3",
@@ -50,6 +52,7 @@ const groups: Group[] = [
     memberIds: ["c1", "c3", "c4"],
     balance: "€120.00",
     memberBalances: { c1: 40.0, c3: 40.0, c4: 40.0 },
+    inviteCode: "GRP001",
   },
 ];
 
@@ -61,7 +64,6 @@ interface DataState {
   groups: Group[];
 }
 
-// initial state
 const initialState: DataState = {
   balanceDetails,
   expenseDetails,
@@ -76,20 +78,33 @@ export const dataSlice = createSlice({
   reducers: {
     addGroup: (
       state,
-      action: PayloadAction<{ name: string; memberIds: string[] }>,
+      action: PayloadAction<{ name: string; inviteCode: string }>,
     ) => {
-      const { name, memberIds } = action.payload;
+      const { name, inviteCode } = action.payload;
       const newGroup: Group = {
         id: `g${Date.now()}`,
         name,
         balance: "€0.00",
-        memberIds,
-        memberBalances: memberIds.reduce(
-          (acc, id) => ({ ...acc, [id]: 0 }),
-          {},
-        ),
+        memberIds: [],
+        memberBalances: {},
+        inviteCode,
       };
       state.groups.unshift(newGroup);
+    },
+    joinGroup: (state, action: PayloadAction<{ inviteCode: string }>) => {
+      const { inviteCode } = action.payload;
+      const group = state.groups.find(
+        (g) => g.inviteCode?.toUpperCase() === inviteCode.toUpperCase(),
+      );
+      if (!group) return;
+      // In a real app we'd add the current user; here we just mark it joined
+      // by adding a mock "you" member id if not already present
+      if (!group.memberIds.includes("me")) {
+        group.memberIds.push("me");
+        if (group.memberBalances) {
+          group.memberBalances["me"] = 0;
+        }
+      }
     },
     updateGroupMembers: (
       state,
@@ -98,9 +113,7 @@ export const dataSlice = createSlice({
       const { groupId, memberIds } = action.payload;
       const group = state.groups.find((g) => g.id === groupId);
       if (!group) return;
-
       group.memberIds = memberIds;
-
       group.memberBalances = memberIds.reduce(
         (acc, id) => {
           acc[id] = group.memberBalances?.[id] ?? 0;
@@ -110,11 +123,11 @@ export const dataSlice = createSlice({
       );
     },
     deleteGroup: (state, action: PayloadAction<string>) => {
-      const groupId = action.payload;
-      state.groups = state.groups.filter((g) => g.id !== groupId);
+      state.groups = state.groups.filter((g) => g.id !== action.payload);
     },
   },
 });
 
-export const { addGroup, updateGroupMembers, deleteGroup } = dataSlice.actions;
+export const { addGroup, updateGroupMembers, deleteGroup, joinGroup } =
+  dataSlice.actions;
 export default dataSlice.reducer;
