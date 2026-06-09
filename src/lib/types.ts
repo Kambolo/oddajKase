@@ -4,6 +4,29 @@ export type Contact = {
   email: string;
 };
 
+export type SummaryItem = {
+  label: string;
+  amount: number;
+  meta: string;
+};
+
+export type GroupExpense = {
+  id: string;
+  title: string;
+  amount: number;
+  paidBy: string; // contact id
+  splitBetween: string[]; // contact ids
+  date: string;
+};
+
+export type GroupPayment = {
+  id: string;
+  from: string; // contact id
+  to: string; // contact id
+  amount: number;
+  date: string;
+};
+
 export type Group = {
   id: string;
   name: string;
@@ -11,20 +34,8 @@ export type Group = {
   memberIds: string[];
   memberBalances?: Record<string, number>;
   inviteCode?: string;
-};
-
-// type Group = {
-//   id: string;
-//   name: string;
-//   balance: string;
-//   memberIds: string[];
-//   memberBalances: Record<string, number>;
-// };
-
-export type SummaryItem = {
-  label: string;
-  amount: number;
-  meta?: string;
+  expenses?: GroupExpense[];
+  payments?: GroupPayment[];
 };
 
 export type SummaryCard = {

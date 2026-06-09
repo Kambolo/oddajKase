@@ -180,6 +180,8 @@ export default function GroupPage() {
           balance={getGroupBalance(summaryGroup)}
           contacts={contacts}
           memberBalances={summaryGroup.memberBalances ?? {}}
+          expenses={summaryGroup.expenses ?? []}
+          payments={summaryGroup.payments ?? []}
           onClose={() => setSummaryGroupId(null)}
         />
       )}

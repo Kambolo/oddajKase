@@ -37,6 +37,43 @@ const groups: Group[] = [
     balance: "€260.50",
     memberBalances: { c1: -40.5, c2: 20.0, c3: 20.5 },
     inviteCode: "ABC123",
+    expenses: [
+      {
+        id: "e1",
+        title: "Hotel — 2 nights",
+        amount: 180.0,
+        paidBy: "c2",
+        splitBetween: ["c1", "c2", "c3"],
+        date: "2025-06-14",
+      },
+      {
+        id: "e2",
+        title: "Dinner at Trattoria",
+        amount: 87.0,
+        paidBy: "c1",
+        splitBetween: ["c1", "c2", "c3"],
+        date: "2025-06-15",
+      },
+      {
+        id: "e3",
+        title: "Train tickets",
+        amount: 54.0,
+        paidBy: "c3",
+        splitBetween: ["c1", "c3"],
+        date: "2025-06-13",
+      },
+      {
+        id: "e4",
+        title: "Museum entry",
+        amount: 36.0,
+        paidBy: "c2",
+        splitBetween: ["c1", "c2", "c3"],
+        date: "2025-06-15",
+      },
+    ],
+    payments: [
+      { id: "p1", from: "c1", to: "c2", amount: 40.5, date: "2025-06-18" },
+    ],
   },
   {
     id: "g2",
@@ -45,6 +82,25 @@ const groups: Group[] = [
     balance: "€-70.20",
     memberBalances: { c2: -35.1, c4: -35.1 },
     inviteCode: "XYZ789",
+    expenses: [
+      {
+        id: "e5",
+        title: "Pizza Margherita × 4",
+        amount: 48.0,
+        paidBy: "c4",
+        splitBetween: ["c2", "c4"],
+        date: "2025-06-10",
+      },
+      {
+        id: "e6",
+        title: "Drinks & desserts",
+        amount: 22.2,
+        paidBy: "c2",
+        splitBetween: ["c2", "c4"],
+        date: "2025-06-10",
+      },
+    ],
+    payments: [],
   },
   {
     id: "g3",
@@ -53,6 +109,36 @@ const groups: Group[] = [
     balance: "€120.00",
     memberBalances: { c1: 40.0, c3: 40.0, c4: 40.0 },
     inviteCode: "GRP001",
+    expenses: [
+      {
+        id: "e7",
+        title: "Gift basket",
+        amount: 75.0,
+        paidBy: "c1",
+        splitBetween: ["c1", "c3", "c4"],
+        date: "2025-06-05",
+      },
+      {
+        id: "e8",
+        title: "Wrapping & card",
+        amount: 12.0,
+        paidBy: "c3",
+        splitBetween: ["c1", "c3", "c4"],
+        date: "2025-06-05",
+      },
+      {
+        id: "e9",
+        title: "Delivery fee",
+        amount: 8.0,
+        paidBy: "c4",
+        splitBetween: ["c1", "c3", "c4"],
+        date: "2025-06-06",
+      },
+    ],
+    payments: [
+      { id: "p2", from: "c3", to: "c1", amount: 25.0, date: "2025-06-07" },
+      { id: "p3", from: "c4", to: "c1", amount: 25.0, date: "2025-06-07" },
+    ],
   },
 ];
 
@@ -88,6 +174,8 @@ export const dataSlice = createSlice({
         memberIds: [],
         memberBalances: {},
         inviteCode,
+        expenses: [],
+        payments: [],
       };
       state.groups.unshift(newGroup);
     },
@@ -97,13 +185,9 @@ export const dataSlice = createSlice({
         (g) => g.inviteCode?.toUpperCase() === inviteCode.toUpperCase(),
       );
       if (!group) return;
-      // In a real app we'd add the current user; here we just mark it joined
-      // by adding a mock "you" member id if not already present
       if (!group.memberIds.includes("me")) {
         group.memberIds.push("me");
-        if (group.memberBalances) {
-          group.memberBalances["me"] = 0;
-        }
+        if (group.memberBalances) group.memberBalances["me"] = 0;
       }
     },
     updateGroupMembers: (
