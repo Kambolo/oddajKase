@@ -126,7 +126,7 @@ export default function GroupPage() {
                     onClick={() => setIsAddOpen(true)}
                     className="text-text-light transition-all hover:bg-accent-dark/90 items-center justify-center rounded-full bg-accent-dark px-5 py-3 text-sm font-semibold  hover:bg-primary/90 cursor-pointer"
                   >
-                    + Add group
+                    Add group
                   </button>
                 </div>
               </div>
