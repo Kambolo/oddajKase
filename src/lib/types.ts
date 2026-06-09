@@ -12,13 +12,12 @@ export type Group = {
   memberBalances?: Record<string, number>;
 };
 
-// type Group = {
-//   id: string;
-//   name: string;
-//   balance: string;
-//   memberIds: string[];
-//   memberBalances: Record<string, number>;
-// };
+export interface Transaction {
+  id: string;
+  title: string;
+  amount: string;
+  date: string;
+}
 
 export type SummaryItem = {
   label: string;

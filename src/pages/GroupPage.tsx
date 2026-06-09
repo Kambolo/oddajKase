@@ -97,13 +97,6 @@ export default function GroupPage() {
                     expense.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddOpen(true)}
-                  className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
-                >
-                  + Add group
-                </button>
               </div>
             </section>
 

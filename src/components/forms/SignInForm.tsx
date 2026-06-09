@@ -73,14 +73,14 @@ export default function SignInForm({ onForgot }: Props) {
       <button
         type="button"
         onClick={onForgot}
-        className="text-sm font-bold text-[#4e635a] hover:text-[#4e635a]/70 transition-colors self-end -mt-1"
+        className="text-sm font-bold text-accent-dark hover:text-accent-dark/70 transition-colors self-end -mt-1 mr-1 cursor-pointer"
       >
         Forgot password?
       </button>
 
       <MainBtn
         name={loading ? "Signing in…" : "Sign in"}
-        className="w-full mt-1 py-4 text-base rounded-2xl"
+        className="w-full mt-1 py-4 text-base rounded-full"
       />
 
       {/* Divider */}
@@ -95,7 +95,7 @@ export default function SignInForm({ onForgot }: Props) {
         type="button"
         onClick={handleGoogle}
         disabled={googleLoading}
-        className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="cursor-pointer flex items-center justify-center gap-3 w-full py-4 rounded-full border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-sm font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {!googleLoading ? (
           <>

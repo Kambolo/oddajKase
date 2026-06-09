@@ -93,14 +93,14 @@ export default function NewExpenseModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+            className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-full bg-[#4E635A] px-5 py-2 text-sm font-semibold text-white hover:bg-[#3f5149]"
+            className="rounded-full bg-accent-dark px-5 py-2 text-sm font-semibold text-white hover:bg-accent-dark/90 cursor-pointer transition-all"
           >
             Save expense
           </button>
@@ -114,7 +114,7 @@ export default function NewExpenseModal({
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Coffee, groceries..."
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
           />
         </label>
         <label className="grid gap-2 text-sm text-slate-700">
@@ -123,7 +123,7 @@ export default function NewExpenseModal({
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
             placeholder="€25.00"
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
           />
         </label>
         <label className="grid gap-2 text-sm text-slate-700">
@@ -131,7 +131,7 @@ export default function NewExpenseModal({
           <select
             value={selectedGroup}
             onChange={(event) => setSelectedGroup(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
           >
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
@@ -145,7 +145,7 @@ export default function NewExpenseModal({
           <select
             value={selectedPerson}
             onChange={(event) => setSelectedPerson(event.target.value)}
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
           >
             {groupMembers.map((member) => (
               <option key={member.id} value={member.id}>
@@ -160,7 +160,7 @@ export default function NewExpenseModal({
             value={category}
             onChange={(event) => setCategory(event.target.value)}
             placeholder="Transport, Food..."
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary"
           />
         </label>
       </div>

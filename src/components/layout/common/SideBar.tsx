@@ -45,7 +45,7 @@ export default function SideBar({
           onClick={onAction}
           className="flex w-full items-center justify-center gap-1.5 rounded-full bg-accent-dark py-3.25 text-sm font-semibold tracking-tight text-text-light transition-all hover:bg-accent-dark/90 cursor-pointer"
         >
-          <span className="text-lg leading-none -mt-0.5">+</span>
+          {/* <span className="text-lg leading-none -mt-0.5">+</span> */}
           {actionLabel}
         </button>
       </div>

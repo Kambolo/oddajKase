@@ -7,7 +7,10 @@ type AuthLayoutProps = {
   children: (mode: AuthMode, setMode: (m: AuthMode) => void) => React.ReactNode;
 };
 
-export default function AuthLayout({ initialMode = "signin", children }: AuthLayoutProps) {
+export default function AuthLayout({
+  initialMode = "signin",
+  children,
+}: AuthLayoutProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
 
   useEffect(() => {
@@ -69,18 +72,18 @@ type ToggleProps = {
 
 function AuthToggle({ mode, onChange }: ToggleProps) {
   return (
-    <div className="flex items-center gap-1 bg-[#f4f3f0] p-1 rounded-[20px] w-full">
+    <div className="flex items-center gap-1 bg-[#f4f3f0] p-1 rounded-full w-full">
       {(["signin", "register"] as const).map((m) => (
         <button
           key={m}
           type="button"
           onClick={() => onChange(m)}
           className={`
-            flex-1 py-2.5 rounded-[16px] text-sm font-bold transition-all duration-200 cursor-pointer
+            flex-1 py-2.5 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer
             ${
               mode === m
-                ? "bg-white text-[#1b1c1a] shadow-[0_1px_4px_rgba(0,0,0,0.10)]"
-                : "text-[#71717a] hover:text-[#1b1c1a]"
+                ? "bg-white text-text shadow-[0_1px_4px_rgba(0,0,0,0.10)]"
+                : "text-[#71717a] hover:text-text"
             }
           `}
         >

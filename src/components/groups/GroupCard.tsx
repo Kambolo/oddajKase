@@ -7,7 +7,14 @@ type Props = {
   onDelete: () => void;
 };
 
-export default function GroupCard({ name, amount, members, onViewSummary, onEdit, onDelete }: Props) {
+export default function GroupCard({
+  name,
+  amount,
+  members,
+  onViewSummary,
+  onEdit,
+  onDelete,
+}: Props) {
   return (
     <div
       role="button"
@@ -17,7 +24,9 @@ export default function GroupCard({ name, amount, members, onViewSummary, onEdit
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm uppercase tracking-[0.24em] text-slate-500">Group</div>
+          <div className="text-sm uppercase tracking-[0.24em] text-slate-500">
+            Group
+          </div>
           <h3 className="mt-2 text-xl font-semibold text-text">{name}</h3>
         </div>
         <div className="text-right">
@@ -27,7 +36,10 @@ export default function GroupCard({ name, amount, members, onViewSummary, onEdit
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
         {members.map((member) => (
-          <span key={member} className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          <span
+            key={member}
+            className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+          >
             {member}
           </span>
         ))}
@@ -54,7 +66,7 @@ export default function GroupCard({ name, amount, members, onViewSummary, onEdit
           Delete group
         </button>
       </div>
-      <div className="mt-4 rounded-3xl bg-slate-50 p-3 text-sm text-slate-500 transition group-hover:bg-slate-100">
+      <div className="mt-4 rounded-3xl bg-slate-50 p-3 text-sm text-slate-500 transition group-hover:bg-slate-100 cursor-pointer">
         Click card to view full summary.
       </div>
     </div>

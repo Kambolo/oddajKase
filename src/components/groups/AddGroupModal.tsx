@@ -68,7 +68,7 @@ export default function AddGroupModal({
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Weekend trip"
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
           />
         </label>
         <div>

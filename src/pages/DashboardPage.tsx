@@ -8,12 +8,14 @@ import SummaryCards from "../components/dashboard/SummaryCards";
 import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
 import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
-import { useAppSelector } from "../store/store";
+import { useAppDispatch, useAppSelector } from "../store/store";
 import type { SummaryCard } from "../lib/types";
 import { formatMoney } from "../util/utils";
+import { addExpense } from "../store/dataSlice";
 
 export default function DashboardPage() {
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<SummaryCard | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const balanceDetails = useAppSelector((state) => state.data.balanceDetails);
   const incomeDetails = useAppSelector((state) => state.data.incomeDetails);
   const expenseDetails = useAppSelector((state) => state.data.expenseDetails);
+  const transactions = useAppSelector((state) => state.data.transactions);
 
   useEffect(() => {
     initGoogleAnalytics();
@@ -66,23 +69,8 @@ export default function DashboardPage() {
     [balanceDetails, incomeDetails, expenseDetails],
   );
 
-  const transactions = useMemo(
-    () => [
-      { id: "1", title: "Coffee", amount: "-€3.50", date: "May 17" },
-      { id: "2", title: "Groceries", amount: "-€42.30", date: "May 16" },
-      {
-        id: "3",
-        title: "Donation received",
-        amount: "+€150.00",
-        date: "May 15",
-      },
-    ],
-    [],
-  );
-
   const filteredTransactions = useMemo(() => {
     if (!searchQuery.trim()) return transactions;
-
     return transactions.filter((item) =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
@@ -99,13 +87,8 @@ export default function DashboardPage() {
     groupId: string;
     personId: string;
   }) => {
-    const group = groups.find((item) => item.id === data.groupId);
-    const contact = contacts.find((item) => item.id === data.personId);
-    console.log("Saved expense:", {
-      ...data,
-      groupName: group?.name,
-      personName: contact?.name,
-    });
+    dispatch(addExpense(data));
+    setIsNewExpenseOpen(false);
   };
 
   return (
