@@ -110,7 +110,7 @@ export default function AddGroupModal({ open, onClose, onCreate }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Weekend trip"
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
             />
           </label>
           <p className="text-sm text-slate-500 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">

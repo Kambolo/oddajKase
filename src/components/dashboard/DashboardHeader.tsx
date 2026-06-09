@@ -16,13 +16,6 @@ export default function DashboardHeader({
           recent activity at a glance.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onNewExpense}
-        className="cursor-pointer inline-flex items-center justify-center rounded-full bg-accent-dark px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-dark/90"
-      >
-        + New expense
-      </button>
     </div>
   );
 }

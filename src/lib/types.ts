@@ -4,11 +4,6 @@ export type Contact = {
   email: string;
 };
 
-export type SummaryItem = {
-  label: string;
-  amount: number;
-  meta: string;
-};
 
 export type GroupExpense = {
   id: string;
@@ -36,6 +31,19 @@ export type Group = {
   inviteCode?: string;
   expenses?: GroupExpense[];
   payments?: GroupPayment[];
+};
+
+export interface Transaction {
+  id: string;
+  title: string;
+  amount: string;
+  date: string;
+}
+
+export type SummaryItem = {
+  label: string;
+  amount: number;
+  meta?: string;
 };
 
 export type SummaryCard = {

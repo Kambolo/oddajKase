@@ -34,7 +34,7 @@ export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
         return (
           <>
             <div className="flex flex-col gap-1 mb-6">
-              <h2 className="text-[26px] font-bold tracking-[-0.5px] leading-[1.3] text-[#1b1c1a]">
+              <h2 className="text-[26px] font-bold tracking-[-0.5px] leading-[1.3] text-text">
                 {title}
               </h2>
               <p className="text-sm font-semibold text-[#56615f]">{sub}</p>

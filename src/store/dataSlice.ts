@@ -1,6 +1,6 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
-import type { Contact, Group, SummaryItem } from "../lib/types";
+import type { Contact, Group, SummaryItem, Transaction } from "../lib/types";
 
 const balanceDetails: SummaryItem[] = [
   { label: "Anna Kowalska", amount: -35.2, meta: "You owe" },
@@ -10,9 +10,9 @@ const balanceDetails: SummaryItem[] = [
 ];
 
 const expenseDetails: SummaryItem[] = [
-  { label: "Lunch with friends", amount: 24.5, meta: "to Jan Nowak" },
-  { label: "Train ticket", amount: 18.2, meta: "to Marta Wiśniewska" },
-  { label: "Office snacks", amount: 12.0, meta: "to Tomek" },
+  { label: "Lunch with friends", amount: -24.5, meta: "to Jan Nowak" },
+  { label: "Train ticket", amount: -18.2, meta: "to Marta Wiśniewska" },
+  { label: "Office snacks", amount: -12.0, meta: "to Tomek" },
 ];
 
 const incomeDetails: SummaryItem[] = [
@@ -27,6 +27,12 @@ const contacts: Contact[] = [
   { id: "c3", name: "Marta Wiśniewska", email: "marta@example.com" },
   { id: "c4", name: "Tomasz Zieliński", email: "tomasz@example.com" },
   { id: "c5", name: "Agnieszka Mazur", email: "agnieszka@example.com" },
+];
+
+const initialTransactions: Transaction[] = [
+  { id: "1", title: "Coffee", amount: "-€3.50", date: "May 17" },
+  { id: "2", title: "Groceries", amount: "-€42.30", date: "May 16" },
+  { id: "3", title: "Donation received", amount: "+€150.00", date: "May 15" },
 ];
 
 const groups: Group[] = [
@@ -148,6 +154,7 @@ interface DataState {
   incomeDetails: SummaryItem[];
   contacts: Contact[];
   groups: Group[];
+  transactions: Transaction[];
 }
 
 const initialState: DataState = {
@@ -156,6 +163,7 @@ const initialState: DataState = {
   incomeDetails,
   contacts,
   groups,
+  transactions: initialTransactions,
 };
 
 export const dataSlice = createSlice({
@@ -209,9 +217,40 @@ export const dataSlice = createSlice({
     deleteGroup: (state, action: PayloadAction<string>) => {
       state.groups = state.groups.filter((g) => g.id !== action.payload);
     },
+    addExpense: (
+      state,
+      action: PayloadAction<{
+        name: string;
+        amount: string;
+        category: string;
+        groupId: string;
+        personId: string;
+      }>,
+    ) => {
+      const { name, amount, personId } = action.payload;
+      const contact = state.contacts.find((c) => c.id === personId);
+
+      const numericAmount = Math.abs(parseFloat(amount) || 0);
+
+      state.expenseDetails.unshift({
+        label: name,
+        amount: -numericAmount,
+        meta: `to ${contact?.name || "Unknown"}`,
+      });
+
+      state.transactions.unshift({
+        id: Date.now().toString(),
+        title: name,
+        amount: `-€${numericAmount.toFixed(2)}`,
+        date: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      });
+    },
   },
 });
 
-export const { addGroup, updateGroupMembers, deleteGroup, joinGroup } =
+export const { addGroup, updateGroupMembers, deleteGroup, addExpense, joinGroup } =
   dataSlice.actions;
 export default dataSlice.reducer;

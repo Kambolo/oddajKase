@@ -172,7 +172,7 @@ export default function RegisterForm() {
 
       <MainBtn
         name="Create account"
-        className="w-full mt-1 py-4 text-base rounded-2xl"
+        className="w-full mt-1 py-4 text-base rounded-full"
       />
     </form>
   );
