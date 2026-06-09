@@ -4,12 +4,23 @@ export type Contact = {
   email: string;
 };
 
+export type ExpenseSplit = {
+  contactId: string;
+  amount: number;
+};
 
 export type GroupExpense = {
   id: string;
+  name?: string;
   title: string;
   amount: number;
+  category?: string;
+  groupId?: string;
+  payerId?: string;
   paidBy: string; // contact id
+  splitMode?: "equal" | "amount" | "percent";
+  splitWithIds?: string[];
+  splits?: ExpenseSplit[];
   splitBetween: string[]; // contact ids
   date: string;
 };
@@ -52,7 +63,10 @@ export type Expense = {
   amount: number;
   category: string;
   groupId: string;
-  personId: string;
+  payerId: string;
+  splitMode: "equal" | "amount" | "percent";
+  splitWithIds: string[];
+  splits: ExpenseSplit[];
   date: string;
 };
 

@@ -12,3 +12,31 @@
   /* CUSTOM FONTS */
   --font-sans: "Nunito", sans-serif;
 }
+
+/* Larger, more comfortable default sizing */
+html {
+  /* increase root font-size so Tailwind rem-based utilities scale up */
+  font-size: 18px; /* was 16px */
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background-color: var(--color-brand-darker);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Slightly larger rounded corners and gentler shadows for a pleasant look */
+:root {
+  --ui-radius: 20px;
+}
+
+/* Utility to use in components when needed */
+.rounded-ui { border-radius: var(--ui-radius); }
+
+/* Improve button focus styles globally for accessibility */
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(78,99,90,0.12);
+}

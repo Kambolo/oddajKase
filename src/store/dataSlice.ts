@@ -1,6 +1,15 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
-import type { Contact, Group, SummaryItem, Transaction } from "../lib/types";
+import { SELF_CONTACT_ID } from "../lib/self";
+import type {
+  Contact,
+  Expense,
+  ExpenseSplit,
+  Group,
+  GroupExpense,
+  SummaryItem,
+  Transaction,
+} from "../lib/types";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -18,14 +27,15 @@ function recomputeGroup(group: Group): void {
   };
 
   for (const exp of group.expenses ?? []) {
-    const n = exp.splitBetween.length;
-    if (n === 0) continue;
-    const share = exp.amount / n;
-    ensure(exp.paidBy);
-    balances[exp.paidBy] += exp.amount;
-    for (const memberId of exp.splitBetween) {
-      ensure(memberId);
-      balances[memberId] -= share;
+    const payerId = exp.payerId ?? exp.paidBy;
+    const splits = normalizeExpenseSplits(exp.amount, exp.splits, exp.splitBetween);
+    if (splits.length === 0) continue;
+
+    ensure(payerId);
+    balances[payerId] += exp.amount;
+    for (const split of splits) {
+      ensure(split.contactId);
+      balances[split.contactId] -= split.amount;
     }
   }
 
@@ -49,6 +59,49 @@ function recomputeGroup(group: Group): void {
   group.balance = `€${totalOwed.toFixed(2)}`;
 }
 
+function normalizeExpenseSplits(
+  amount: number,
+  splits: ExpenseSplit[] | undefined,
+  splitBetween: string[] | undefined,
+): ExpenseSplit[] {
+  if (splits?.length) {
+    return splits.map((split) => ({
+      contactId: split.contactId,
+      amount: parseFloat(split.amount.toFixed(2)),
+    }));
+  }
+
+  const ids = splitBetween ?? [];
+  if (ids.length === 0) return [];
+
+  const baseCents = Math.floor((amount * 100) / ids.length);
+  let remainingCents = Math.round(amount * 100) - baseCents * ids.length;
+
+  return ids.map((contactId) => {
+    const cents = baseCents + (remainingCents > 0 ? 1 : 0);
+    if (remainingCents > 0) remainingCents -= 1;
+    return { contactId, amount: cents / 100 };
+  });
+}
+
+function toDashboardExpense(groupId: string, expense: GroupExpense): Expense {
+  const payerId = expense.payerId ?? expense.paidBy;
+  const splitWithIds = expense.splitWithIds ?? expense.splitBetween;
+
+  return {
+    id: expense.id,
+    name: expense.name ?? expense.title,
+    amount: expense.amount,
+    category: expense.category ?? "General",
+    groupId,
+    payerId,
+    splitMode: expense.splitMode ?? "equal",
+    splitWithIds,
+    splits: normalizeExpenseSplits(expense.amount, expense.splits, splitWithIds),
+    date: expense.date,
+  };
+}
+
 // ─── seed data ────────────────────────────────────────────────────────────────
 
 const balanceDetails: SummaryItem[] = [
@@ -65,9 +118,9 @@ const expenseDetails: SummaryItem[] = [
 ];
 
 const incomeDetails: SummaryItem[] = [
-  { label: "Agnieszka Mazur", amount: 50.0, meta: "Paid back" },
-  { label: "Jan Nowak", amount: 20.0, meta: "Paid back" },
-  { label: "Marta Wiśniewska", amount: 15.5, meta: "Paid back" },
+  { label: "Agnieszka Mazur", amount: 50.0, meta: "Owes you" },
+  { label: "Jan Nowak", amount: 20.0, meta: "Owes you" },
+  { label: "Marta Wiśniewska", amount: 15.5, meta: "Owes you" },
 ];
 
 const contacts: Contact[] = [
@@ -199,6 +252,9 @@ const rawGroups: Group[] = [
 ];
 
 rawGroups.forEach(recomputeGroup);
+const initialExpenses: Expense[] = rawGroups.flatMap((group) =>
+  (group.expenses ?? []).map((expense) => toDashboardExpense(group.id, expense)),
+);
 
 // ─── slice ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +264,7 @@ interface DataState {
   incomeDetails: SummaryItem[];
   contacts: Contact[];
   groups: Group[];
+  expenses: Expense[];
   transactions: Transaction[];
 }
 
@@ -217,6 +274,7 @@ const initialState: DataState = {
   incomeDetails,
   contacts,
   groups: rawGroups,
+  expenses: initialExpenses,
   transactions: initialTransactions,
 };
 
@@ -233,8 +291,8 @@ export const dataSlice = createSlice({
         id: `g${Date.now()}`,
         name,
         balance: "€0.00",
-        memberIds: [],
-        memberBalances: {},
+        memberIds: [SELF_CONTACT_ID],
+        memberBalances: { [SELF_CONTACT_ID]: 0 },
         inviteCode,
         expenses: [],
         payments: [],
@@ -273,15 +331,37 @@ export const dataSlice = createSlice({
       state,
       action: PayloadAction<{
         name: string;
-        amount: string;
+        amount: number;
         category: string;
         groupId: string;
-        personId: string;
+        payerId: string;
+        splitMode: "equal" | "amount" | "percent";
+        splitWithIds: string[];
+        splits: ExpenseSplit[];
       }>,
     ) => {
-      const { name, amount, personId, groupId } = action.payload;
-      const contact = state.contacts.find((c) => c.id === personId);
-      const numericAmount = Math.abs(parseFloat(amount) || 0);
+      const {
+        name,
+        amount,
+        category,
+        groupId,
+        payerId,
+        splitMode,
+        splitWithIds,
+        splits,
+      } = action.payload;
+      const contact =
+        payerId === SELF_CONTACT_ID
+          ? { name: "You" }
+          : state.contacts.find((c) => c.id === payerId);
+      const numericAmount = Math.abs(amount || 0);
+      const normalizedSplits = normalizeExpenseSplits(
+        numericAmount,
+        splits,
+        splitWithIds,
+      );
+      const expenseId = `e${Date.now()}`;
+      const date = new Date().toISOString().split("T")[0];
 
       state.expenseDetails.unshift({
         label: name,
@@ -290,7 +370,7 @@ export const dataSlice = createSlice({
       });
 
       state.transactions.unshift({
-        id: Date.now().toString(),
+        id: expenseId,
         title: name,
         amount: `-€${numericAmount.toFixed(2)}`,
         date: new Date().toLocaleDateString("en-US", {
@@ -302,16 +382,39 @@ export const dataSlice = createSlice({
       const group = state.groups.find((g) => g.id === groupId);
       if (group) {
         if (!group.expenses) group.expenses = [];
+        for (const id of [payerId, ...splitWithIds]) {
+          if (!group.memberIds.includes(id)) group.memberIds.push(id);
+        }
         group.expenses.unshift({
-          id: `e${Date.now()}`,
+          id: expenseId,
+          name,
           title: name,
           amount: numericAmount,
-          paidBy: personId,
-          splitBetween: group.memberIds,
-          date: new Date().toISOString().split("T")[0],
+          category,
+          groupId,
+          payerId,
+          paidBy: payerId,
+          splitMode,
+          splitWithIds,
+          splits: normalizedSplits,
+          splitBetween: splitWithIds,
+          date,
         });
         recomputeGroup(group);
       }
+
+      state.expenses.unshift({
+        id: expenseId,
+        name,
+        amount: numericAmount,
+        category,
+        groupId,
+        payerId,
+        splitMode,
+        splitWithIds,
+        splits: normalizedSplits,
+        date,
+      });
     },
 
     /**
@@ -341,6 +444,18 @@ export const dataSlice = createSlice({
       });
       recomputeGroup(group);
     },
+
+    // Removes one income detail entry (used when user marks an owed amount as paid)
+    removeIncomeDetail: (state, action: PayloadAction<string>) => {
+      const label = action.payload;
+      state.incomeDetails = state.incomeDetails.filter((item) => item.label !== label);
+    },
+
+    // Removes one expense detail entry (used when user marks an amount they owe as paid)
+    removeExpenseDetail: (state, action: PayloadAction<string>) => {
+      const label = action.payload;
+      state.expenseDetails = state.expenseDetails.filter((item) => item.label !== label);
+    },
   },
 });
 
@@ -351,5 +466,7 @@ export const {
   addExpense,
   joinGroup,
   markSettlementPaid,
+  removeIncomeDetail,
+  removeExpenseDetail,
 } = dataSlice.actions;
 export default dataSlice.reducer;

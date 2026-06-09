@@ -1,4 +1,5 @@
 import Modal from "../common/Modal";
+import { SELF_CONTACT_ID, SELF_CONTACT_LABEL } from "../../lib/self";
 
 type Contact = {
   id: string;
@@ -23,6 +24,11 @@ export default function EditGroupMembersModal({
   onClose,
   onSave,
 }: Props) {
+  const people = [
+    { id: SELF_CONTACT_ID, name: SELF_CONTACT_LABEL, email: "Account owner" },
+    ...contacts,
+  ];
+
   const toggleContact = (id: string) => {
     const next = memberIds.includes(id)
       ? memberIds.filter((item) => item !== id)
@@ -51,7 +57,7 @@ export default function EditGroupMembersModal({
           in this group.
         </p>
         <div className="grid gap-2 max-h-72 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3">
-          {contacts.map((contact) => (
+          {people.map((contact) => (
             <label
               key={contact.id}
               className="flex cursor-pointer items-center justify-between gap-3 rounded-3xl px-4 py-3 transition hover:bg-slate-100"
