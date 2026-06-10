@@ -6,6 +6,10 @@ import { ProtectedRoute } from "./components/common/ProtectedRoute.tsx";
 import { PublicRoute } from "./components/common/PublicRoute.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import "./index.css";
+import { initContentsquare } from "./initContentsquare";
+
+// Load Contentsquare immediately for all pages
+initContentsquare();
 import SignInPage from "./pages/AuthPage.tsx";
 import DashboardPage from "./pages/DashboardPage.tsx";
 import GroupPage from "./pages/GroupPage.tsx";
