@@ -90,7 +90,7 @@ export default function JoinGroupModal({ open, onClose, onJoin }: Props) {
               }}
               placeholder="e.g. ABC123"
               maxLength={10}
-              className={`rounded-2xl border bg-slate-50 px-4 py-3 text-center text-xl font-mono tracking-widest uppercase outline-none transition-colors ${
+              className={`rounded-full border bg-slate-50 px-4 py-3 text-center text-xl font-mono tracking-widest uppercase outline-none transition-colors ${
                 error
                   ? "border-rose-400 focus:border-rose-500"
                   : "border-slate-200 focus:border-primary"

@@ -128,7 +128,7 @@ export default function GroupSummaryModal({
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
+        <div className="flex gap-1 rounded-full bg-slate-100 p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -137,7 +137,7 @@ export default function GroupSummaryModal({
                 setTab(t.id);
                 setConfirmingKey(null);
               }}
-              className={`cursor-pointer flex-1 rounded-xl py-2 text-xs font-semibold transition-all ${
+              className={`cursor-pointer flex-1 rounded-full py-2 text-xs font-semibold transition-all ${
                 tab === t.id
                   ? "bg-white text-slate-800 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"

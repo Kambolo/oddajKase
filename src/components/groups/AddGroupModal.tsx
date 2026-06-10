@@ -113,7 +113,7 @@ export default function AddGroupModal({ open, onClose, onCreate }: Props) {
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
             />
           </label>
-          <p className="text-sm text-slate-500 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
+          <p className="text-sm text-slate-500 rounded-full bg-slate-50 border border-slate-200 px-4 py-3">
             After creating the group you'll receive an invite code to share with
             others.
           </p>

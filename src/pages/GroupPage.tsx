@@ -103,9 +103,9 @@ export default function GroupPage() {
           onSearch={setSearchQuery}
         />
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="w-full space-y-6">
-            <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden p-6">
+          <div className="flex flex-1 flex-col w-full space-y-6 overflow-hidden">
+            <section className="shrink-0 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-sm">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h1 className="text-3xl font-semibold text-text">Groups</h1>
@@ -133,19 +133,21 @@ export default function GroupPage() {
               </div>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-3">
-              {filteredGroups.map((group) => (
-                <GroupCard
-                  key={group.id}
-                  name={group.name}
-                  members={memberNames(group)}
-                  inviteCode={group.inviteCode}
-                  onViewSummary={() => setSummaryGroupId(group.id)}
-                  onEdit={() => setEditingGroupId(group.id)}
-                  onDelete={() => handleDeleteGroup(group.id)}
-                />
-              ))}
-            </section>
+            <div className="flex-1 overflow-y-auto pb-6 pr-2">
+              <section className="grid gap-6 xl:grid-cols-3">
+                {filteredGroups.map((group) => (
+                  <GroupCard
+                    key={group.id}
+                    name={group.name}
+                    members={memberNames(group)}
+                    inviteCode={group.inviteCode}
+                    onViewSummary={() => setSummaryGroupId(group.id)}
+                    onEdit={() => setEditingGroupId(group.id)}
+                    onDelete={() => handleDeleteGroup(group.id)}
+                  />
+                ))}
+              </section>
+            </div>
           </div>
         </div>
       </div>

@@ -22,7 +22,7 @@ export default function SummaryCards<T extends BaseCard>({
           key={card.id}
           type="button"
           onClick={() => onCardClick(card)}
-          className="group rounded-[28px] border border-white/10 bg-white/5 p-6 text-left transition hover:border-accent/70 hover:bg-white/10 cursor-pointer"
+          className="group rounded-[28px] border border-white/10 bg-white/5 p-6 text-left transition hover:border-accent/70 hover:bg-white/10 cursor-pointer flex flex-col shadow-sm"
         >
           <div className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
             {card.title}

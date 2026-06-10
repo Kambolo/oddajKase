@@ -179,14 +179,14 @@ export default function NewExpenseModal({
             <button
               type="button"
               onClick={handleCancel}
-              className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition-all"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="rounded-full bg-accent-dark px-5 py-2 text-sm font-semibold text-text-light hover:bg-accent-dark/90"
+              className="rounded-full bg-accent-dark px-5 py-2 text-sm font-semibold text-text-light hover:bg-accent-dark/90 cursor-pointer transition-all"
             >
               Save expense
             </button>
@@ -279,7 +279,7 @@ export default function NewExpenseModal({
                   type="checkbox"
                   checked={selectedSplitWithIds.includes(person.id)}
                   onChange={() => toggleSplit(person.id)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded-xl border-slate-300 text-primary focus:ring-primary"
                 />
               </label>
             ))}
@@ -296,7 +296,7 @@ export default function NewExpenseModal({
               key={value}
               type="button"
               onClick={() => setSplitMode(value as SplitMode)}
-              className={`rounded-full border px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-accent-dark focus:ring-offset-2 ${
+              className={`rounded-full border px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-accent-dark focus:ring-offset-2 cursor-pointer transition-all ${
                 splitMode === value
                   ? "border-accent-dark bg-accent-dark text-text-light hover:bg-accent-dark/90"
                   : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -314,7 +314,7 @@ export default function NewExpenseModal({
               return (
                 <label
                   key={id}
-                  className="grid grid-cols-[1fr_120px] items-center gap-3 rounded-3xl border border-slate-200 px-4 py-3"
+                  className="grid grid-cols-[1fr_120px] items-center gap-3 rounded-full border border-slate-200 pl-6 pr-3 py-3"
                 >
                   <span className="font-medium text-slate-900">
                     {person?.name ?? "Unknown"}
@@ -327,7 +327,7 @@ export default function NewExpenseModal({
                         [id]: event.target.value,
                       }))
                     }
-                    className="rounded-2xl border border-slate-200 px-3 py-2 text-right text-slate-900"
+                    className="rounded-full border border-slate-200 px-3 py-2 text-right text-slate-900"
                     inputMode="decimal"
                     placeholder={splitMode === "percent" ? "0%" : "0.00"}
                   />
