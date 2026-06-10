@@ -143,8 +143,6 @@ To mark a debt as paid from the Dashboard, click the **"Owed to you"** card. Cli
 
 The balance updates immediately and the card reflects the new state.
 
-![After marking as paid](readme_images/image-16.png)
-
 The same flow works in reverse for the **"You owe"** card.
 
 ![Mark you owe as paid](readme_images/image-17.png)
