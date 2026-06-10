@@ -11,15 +11,6 @@ import type {
   Transaction,
 } from "../lib/types";
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Recomputes memberBalances and balance string for a group from scratch,
- * based on its expenses and payments arrays.
- *
- *   positive balance → member is owed money
- *   negative balance → member owes money
- */
 function recomputeGroup(group: Group): void {
   const balances: Record<string, number> = {};
   const ensure = (id: string) => {
@@ -28,7 +19,11 @@ function recomputeGroup(group: Group): void {
 
   for (const exp of group.expenses ?? []) {
     const payerId = exp.payerId ?? exp.paidBy;
-    const splits = normalizeExpenseSplits(exp.amount, exp.splits, exp.splitBetween);
+    const splits = normalizeExpenseSplits(
+      exp.amount,
+      exp.splits,
+      exp.splitBetween,
+    );
     if (splits.length === 0) continue;
 
     ensure(payerId);
@@ -51,7 +46,6 @@ function recomputeGroup(group: Group): void {
     group.memberBalances[id] = parseFloat((balances[id] ?? 0).toFixed(2));
   }
 
-  // balance string = sum of what creditors are owed (positive side)
   const totalOwed = Object.values(group.memberBalances)
     .filter((v) => v > 0)
     .reduce((s, v) => s + v, 0);
@@ -97,31 +91,16 @@ function toDashboardExpense(groupId: string, expense: GroupExpense): Expense {
     payerId,
     splitMode: expense.splitMode ?? "equal",
     splitWithIds,
-    splits: normalizeExpenseSplits(expense.amount, expense.splits, splitWithIds),
+    splits: normalizeExpenseSplits(
+      expense.amount,
+      expense.splits,
+      splitWithIds,
+    ),
     date: expense.date,
   };
 }
 
 // ─── seed data ────────────────────────────────────────────────────────────────
-
-const balanceDetails: SummaryItem[] = [
-  { label: "Anna Kowalska", amount: -35.2, meta: "You owe" },
-  { label: "Jan Nowak", amount: 15.0, meta: "Owes you" },
-  { label: "Marta Wiśniewska", amount: 20.0, meta: "Owes you" },
-  { label: "Tomasz Zieliński", amount: -45.5, meta: "You owe" },
-];
-
-const expenseDetails: SummaryItem[] = [
-  { label: "Lunch with friends", amount: -24.5, meta: "to Jan Nowak" },
-  { label: "Train ticket", amount: -18.2, meta: "to Marta Wiśniewska" },
-  { label: "Office snacks", amount: -12.0, meta: "to Tomek" },
-];
-
-const incomeDetails: SummaryItem[] = [
-  { label: "Agnieszka Mazur", amount: 50.0, meta: "Owes you" },
-  { label: "Jan Nowak", amount: 20.0, meta: "Owes you" },
-  { label: "Marta Wiśniewska", amount: 15.5, meta: "Owes you" },
-];
 
 const contacts: Contact[] = [
   { id: "c1", name: "Anna Kowalska", email: "anna@example.com" },
@@ -131,134 +110,52 @@ const contacts: Contact[] = [
   { id: "c5", name: "Agnieszka Mazur", email: "agnieszka@example.com" },
 ];
 
-const initialTransactions: Transaction[] = [
-  { id: "1", title: "Coffee", amount: "-€3.50", date: "May 17" },
-  { id: "2", title: "Groceries", amount: "-€42.30", date: "May 16" },
-  { id: "3", title: "Donation received", amount: "+€150.00", date: "May 15" },
-];
+const initialTransactions: Transaction[] = [];
 
-// Groups — balances are derived via recomputeGroup, not hardcoded
 const rawGroups: Group[] = [
   {
     id: "g1",
     name: "Weekend trip",
-    memberIds: ["c1", "c2", "c3"],
+    memberIds: [SELF_CONTACT_ID, "c1", "c2", "c3"],
     balance: "",
     memberBalances: {},
     inviteCode: "ABC123",
-    expenses: [
-      {
-        id: "e1",
-        title: "Hotel — 2 nights",
-        amount: 180.0,
-        paidBy: "c2",
-        splitBetween: ["c1", "c2", "c3"],
-        date: "2025-06-14",
-      },
-      {
-        id: "e2",
-        title: "Dinner at Trattoria",
-        amount: 87.0,
-        paidBy: "c1",
-        splitBetween: ["c1", "c2", "c3"],
-        date: "2025-06-15",
-      },
-      {
-        id: "e3",
-        title: "Train tickets",
-        amount: 54.0,
-        paidBy: "c3",
-        splitBetween: ["c1", "c3"],
-        date: "2025-06-13",
-      },
-      {
-        id: "e4",
-        title: "Museum entry",
-        amount: 36.0,
-        paidBy: "c2",
-        splitBetween: ["c1", "c2", "c3"],
-        date: "2025-06-15",
-      },
-    ],
-    payments: [
-      { id: "p1", from: "c1", to: "c2", amount: 40.5, date: "2025-06-18" },
-    ],
+    expenses: [],
+    payments: [],
   },
   {
     id: "g2",
     name: "Office lunch",
-    memberIds: ["c2", "c4"],
+    memberIds: [SELF_CONTACT_ID, "c2", "c4"],
     balance: "",
     memberBalances: {},
     inviteCode: "XYZ789",
-    expenses: [
-      {
-        id: "e5",
-        title: "Pizza Margherita × 4",
-        amount: 48.0,
-        paidBy: "c4",
-        splitBetween: ["c2", "c4"],
-        date: "2025-06-10",
-      },
-      {
-        id: "e6",
-        title: "Drinks & desserts",
-        amount: 22.2,
-        paidBy: "c2",
-        splitBetween: ["c2", "c4"],
-        date: "2025-06-10",
-      },
-    ],
+    expenses: [],
     payments: [],
   },
   {
     id: "g3",
     name: "Charity gift",
-    memberIds: ["c1", "c3", "c4"],
+    memberIds: [SELF_CONTACT_ID, "c1", "c3", "c4"],
     balance: "",
     memberBalances: {},
     inviteCode: "GRP001",
-    expenses: [
-      {
-        id: "e7",
-        title: "Gift basket",
-        amount: 75.0,
-        paidBy: "c1",
-        splitBetween: ["c1", "c3", "c4"],
-        date: "2025-06-05",
-      },
-      {
-        id: "e8",
-        title: "Wrapping & card",
-        amount: 12.0,
-        paidBy: "c3",
-        splitBetween: ["c1", "c3", "c4"],
-        date: "2025-06-05",
-      },
-      {
-        id: "e9",
-        title: "Delivery fee",
-        amount: 8.0,
-        paidBy: "c4",
-        splitBetween: ["c1", "c3", "c4"],
-        date: "2025-06-06",
-      },
-    ],
-    payments: [
-      { id: "p2", from: "c3", to: "c1", amount: 25.0, date: "2025-06-07" },
-      { id: "p3", from: "c4", to: "c1", amount: 25.0, date: "2025-06-07" },
-    ],
+    expenses: [],
+    payments: [],
   },
 ];
 
 rawGroups.forEach(recomputeGroup);
+
 const initialExpenses: Expense[] = rawGroups.flatMap((group) =>
-  (group.expenses ?? []).map((expense) => toDashboardExpense(group.id, expense)),
+  (group.expenses ?? []).map((expense) =>
+    toDashboardExpense(group.id, expense),
+  ),
 );
 
 // ─── slice ────────────────────────────────────────────────────────────────────
 
-interface DataState {
+export interface DataState {
   balanceDetails: SummaryItem[];
   expenseDetails: SummaryItem[];
   incomeDetails: SummaryItem[];
@@ -266,16 +163,23 @@ interface DataState {
   groups: Group[];
   expenses: Expense[];
   transactions: Transaction[];
+  settledDebts: {
+    fromId: string;
+    toId: string;
+    amount: number;
+    groupId: string;
+  }[];
 }
 
 const initialState: DataState = {
-  balanceDetails,
-  expenseDetails,
-  incomeDetails,
+  balanceDetails: [],
+  expenseDetails: [],
+  incomeDetails: [],
   contacts,
   groups: rawGroups,
   expenses: initialExpenses,
   transactions: initialTransactions,
+  settledDebts: [],
 };
 
 export const dataSlice = createSlice({
@@ -306,8 +210,8 @@ export const dataSlice = createSlice({
         (g) => g.inviteCode?.toUpperCase() === inviteCode.toUpperCase(),
       );
       if (!group) return;
-      if (!group.memberIds.includes("me")) {
-        group.memberIds.push("me");
+      if (!group.memberIds.includes(SELF_CONTACT_ID)) {
+        group.memberIds.push(SELF_CONTACT_ID);
         recomputeGroup(group);
       }
     },
@@ -319,12 +223,22 @@ export const dataSlice = createSlice({
       const { groupId, memberIds } = action.payload;
       const group = state.groups.find((g) => g.id === groupId);
       if (!group) return;
-      group.memberIds = memberIds;
+      // zawsze upewnij się że SELF jest w grupie
+      if (!memberIds.includes(SELF_CONTACT_ID)) {
+        group.memberIds = [SELF_CONTACT_ID, ...memberIds];
+      } else {
+        group.memberIds = memberIds;
+      }
       recomputeGroup(group);
     },
 
     deleteGroup: (state, action: PayloadAction<string>) => {
-      state.groups = state.groups.filter((g) => g.id !== action.payload);
+      const groupId = action.payload;
+      state.groups = state.groups.filter((g) => g.id !== groupId);
+      state.expenses = state.expenses.filter((e) => e.groupId !== groupId);
+      state.settledDebts = state.settledDebts.filter(
+        (d) => d.groupId !== groupId,
+      );
     },
 
     addExpense: (
@@ -382,6 +296,7 @@ export const dataSlice = createSlice({
       const group = state.groups.find((g) => g.id === groupId);
       if (group) {
         if (!group.expenses) group.expenses = [];
+        if (!group.payments) group.payments = [];
         for (const id of [payerId, ...splitWithIds]) {
           if (!group.memberIds.includes(id)) group.memberIds.push(id);
         }
@@ -417,11 +332,6 @@ export const dataSlice = createSlice({
       });
     },
 
-    /**
-     * Records a payment from `fromId` to `toId` for `amount`,
-     * then recomputes all balances. Use this when "Mark as paid" is clicked
-     * on a settlement suggestion in the Settle up tab.
-     */
     markSettlementPaid: (
       state,
       action: PayloadAction<{
@@ -443,18 +353,23 @@ export const dataSlice = createSlice({
         date: new Date().toISOString().split("T")[0],
       });
       recomputeGroup(group);
+
+      if (!state.settledDebts) state.settledDebts = [];
+      state.settledDebts.push({ fromId, toId, amount, groupId });
     },
 
-    // Removes one income detail entry (used when user marks an owed amount as paid)
     removeIncomeDetail: (state, action: PayloadAction<string>) => {
       const label = action.payload;
-      state.incomeDetails = state.incomeDetails.filter((item) => item.label !== label);
+      state.incomeDetails = state.incomeDetails.filter(
+        (item) => item.label !== label,
+      );
     },
 
-    // Removes one expense detail entry (used when user marks an amount they owe as paid)
     removeExpenseDetail: (state, action: PayloadAction<string>) => {
       const label = action.payload;
-      state.expenseDetails = state.expenseDetails.filter((item) => item.label !== label);
+      state.expenseDetails = state.expenseDetails.filter(
+        (item) => item.label !== label,
+      );
     },
   },
 });

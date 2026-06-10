@@ -1,29 +1,43 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
+import type { DataState } from "./dataSlice";
 import { dataSlice } from "./dataSlice";
 
 const STORAGE_KEY = "oddajKase_state";
 
-function loadState() {
+type PersistedState = {
+  data: DataState;
+};
+
+function loadState(): PersistedState | undefined {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return undefined;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw) as PersistedState;
+
+    if (parsed?.data) {
+      if (!Array.isArray(parsed.data.settledDebts)) {
+        parsed.data.settledDebts = [];
+      }
+      for (const group of parsed.data.groups ?? []) {
+        if (!Array.isArray(group.payments)) group.payments = [];
+        if (!Array.isArray(group.expenses)) group.expenses = [];
+        if (!group.memberBalances) group.memberBalances = {};
+      }
+    }
+
+    return parsed;
   } catch (e) {
-    // ignore and fallback to undefined
-    // eslint-disable-next-line no-console
     console.warn("Failed to load state from localStorage", e);
     return undefined;
   }
 }
 
-function saveState(state: any) {
+function saveState(state: PersistedState) {
   try {
-    // Persist only the data slice to avoid serializing non-serializable parts of other middleware/state.
-    const toSave = { data: state.data };
+    const toSave: PersistedState = { data: state.data };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn("Failed to save state to localStorage", e);
   }
 }

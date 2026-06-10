@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import Modal from "../common/Modal";
 import { SELF_CONTACT_ID, SELF_CONTACT_LABEL } from "../../lib/self";
 import type { Contact, ExpenseSplit, Group } from "../../lib/types";
 import { formatMoney } from "../../util/utils";
+import Modal from "../common/Modal";
 
 type SplitMode = "equal" | "amount" | "percent";
 
@@ -74,34 +74,42 @@ export default function NewExpenseModal({
   );
   const activePayerId = groupPeopleIds.has(payerId)
     ? payerId
-    : currentContactId ?? SELF_CONTACT_ID;
+    : (currentContactId ?? SELF_CONTACT_ID);
   const selectedSplitWithIds = useMemo(() => {
     const activeIds = splitWithIds.filter((id) => groupPeopleIds.has(id));
     return activeIds.length > 0 ? activeIds : [SELF_CONTACT_ID];
   }, [groupPeopleIds, splitWithIds]);
 
   const numericAmount = Number.parseFloat(amount.replace(/[^0-9.-]/g, ""));
-  const safeAmount = Number.isFinite(numericAmount) ? Math.abs(numericAmount) : 0;
+  const safeAmount = Number.isFinite(numericAmount)
+    ? Math.abs(numericAmount)
+    : 0;
 
   const splits = useMemo<ExpenseSplit[]>(() => {
     if (selectedSplitWithIds.length === 0 || safeAmount <= 0) return [];
-    if (splitMode === "equal") return splitEqual(safeAmount, selectedSplitWithIds);
+    if (splitMode === "equal")
+      return splitEqual(safeAmount, selectedSplitWithIds);
     if (splitMode === "percent") {
       return selectedSplitWithIds.map((contactId) => ({
         contactId,
         amount: roundMoney(
-          (safeAmount * (Number.parseFloat(manualValues[contactId] ?? "0") || 0)) /
+          (safeAmount *
+            (Number.parseFloat(manualValues[contactId] ?? "0") || 0)) /
             100,
         ),
       }));
     }
     return selectedSplitWithIds.map((contactId) => ({
       contactId,
-      amount: roundMoney(Number.parseFloat(manualValues[contactId] ?? "0") || 0),
+      amount: roundMoney(
+        Number.parseFloat(manualValues[contactId] ?? "0") || 0,
+      ),
     }));
   }, [manualValues, safeAmount, selectedSplitWithIds, splitMode]);
 
-  const splitTotal = roundMoney(splits.reduce((sum, split) => sum + split.amount, 0));
+  const splitTotal = roundMoney(
+    splits.reduce((sum, split) => sum + split.amount, 0),
+  );
   const percentTotal = selectedSplitWithIds.reduce(
     (sum, id) => sum + (Number.parseFloat(manualValues[id] ?? "0") || 0),
     0,
@@ -136,7 +144,9 @@ export default function NewExpenseModal({
       return setError("Percentages must add up to 100%.");
     }
     if (splitMode === "amount" && Math.abs(splitTotal - safeAmount) > 0.01) {
-      return setError("Manual split amounts must add up to the expense amount.");
+      return setError(
+        "Manual split amounts must add up to the expense amount.",
+      );
     }
 
     onSave({
@@ -211,32 +221,42 @@ export default function NewExpenseModal({
             className="rounded-3xl border border-slate-200 px-4 py-3 text-slate-900"
             placeholder="Category"
           />
-          <select
-            value={groupId}
-            onChange={(event) => setGroupId(event.target.value)}
-            className="rounded-3xl border border-slate-200 px-4 py-3 text-slate-900"
-          >
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={groupId}
+              onChange={(event) => setGroupId(event.target.value)}
+              className="w-full appearance-none rounded-3xl border border-slate-200 px-4 py-3 pr-10 text-slate-900"
+            >
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+              ▾
+            </span>
+          </div>
         </div>
 
         <label className="block text-sm font-medium text-slate-700">
           Paid by
-          <select
-            value={activePayerId}
-            onChange={(event) => setPayerId(event.target.value)}
-            className="mt-2 w-full rounded-3xl border border-slate-200 px-4 py-3 text-slate-900"
-          >
-            {groupPeople.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative mt-2">
+            <select
+              value={activePayerId}
+              onChange={(event) => setPayerId(event.target.value)}
+              className="w-full appearance-none rounded-3xl border border-slate-200 px-4 py-3 pr-10 text-slate-900"
+            >
+              {groupPeople.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+              ▾
+            </span>
+          </div>
         </label>
 
         <div className="space-y-2">
@@ -251,7 +271,9 @@ export default function NewExpenseModal({
                   <span className="block font-medium text-slate-900">
                     {person.name}
                   </span>
-                  <span className="block text-sm text-slate-500">{person.email}</span>
+                  <span className="block text-sm text-slate-500">
+                    {person.email}
+                  </span>
                 </span>
                 <input
                   type="checkbox"

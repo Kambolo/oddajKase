@@ -8,10 +8,9 @@ import SideBar from "../components/layout/common/SideBar";
 import TopBar from "../components/layout/common/TopBar";
 import { initGoogleAnalytics, trackPageView } from "../lib/googleAnalytics";
 import { SELF_CONTACT_ID, SELF_CONTACT_LABEL } from "../lib/self";
-import type { Expense, SummaryCard } from "../lib/types";
-import { addExpense, removeIncomeDetail, removeExpenseDetail } from "../store/dataSlice";
+import type { SummaryCard, SummaryItem } from "../lib/types";
+import { addExpense, markSettlementPaid } from "../store/dataSlice";
 import { useAppDispatch, useAppSelector } from "../store/store";
-import { buildPersonalSummary } from "../util/finance";
 import { formatMoney } from "../util/utils";
 
 type Transaction = {
@@ -19,167 +18,238 @@ type Transaction = {
   title: string;
   amount: string;
   date: string;
-  meta: string;
-  tone: "neutral" | "danger" | "success";
+  paidBy: string;
 };
 
-const splitAmountForCurrentUser = (
-  expense: Expense,
-  currentContactId: string | null,
-) => {
-  if (!currentContactId) return 0;
+type OwedEntry = { amount: number; groupId: string; expenseName: string };
 
-  const split = expense.splits.find((item) => item.contactId === currentContactId);
-  if (!split) return 0;
-
-  if (expense.payerId === currentContactId) {
-    return expense.splits
-      .filter((item) => item.contactId !== currentContactId)
-      .reduce((sum, item) => sum + item.amount, 0);
-  }
-
-  return split.amount;
+type SettlementItem = SummaryItem & {
+  groupId?: string;
+  fromId?: string;
+  toId?: string;
+  rawAmount: number;
 };
 
 export default function DashboardPage() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const [isNewExpenseOpen, setIsNewExpenseOpen] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<SummaryCard | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [confirmingKey, setConfirmingKey] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const groups = useAppSelector((state) => state.data.groups);
   const contacts = useAppSelector((state) => state.data.contacts);
   const expenses = useAppSelector((state) => state.data.expenses);
-
-  const currentContactId = SELF_CONTACT_ID;
+  const settledDebts = useAppSelector((state) => state.data.settledDebts ?? []);
 
   useEffect(() => {
     initGoogleAnalytics();
     trackPageView(location.pathname);
   }, [location.pathname]);
 
-  const storeBalanceDetails = useAppSelector((s) => s.data.balanceDetails);
-  const storeExpenseDetails = useAppSelector((s) => s.data.expenseDetails);
-  const storeIncomeDetails = useAppSelector((s) => s.data.incomeDetails);
+  const getName = (id: string) => {
+    if (id === SELF_CONTACT_ID) return SELF_CONTACT_LABEL;
+    return contacts.find((c) => c.id === id)?.name ?? "Unknown";
+  };
 
-  const personalSummary = useMemo(() => {
-    const hasMock = (storeBalanceDetails?.length ?? 0) > 0 || (storeExpenseDetails?.length ?? 0) > 0 || (storeIncomeDetails?.length ?? 0) > 0;
-    if (hasMock) {
-      const round = (v: number) => parseFloat(v.toFixed(2));
-      const expenseTotal = round(storeExpenseDetails.reduce((sum, it) => sum + Math.abs(it.amount), 0));
-      const incomeTotal = round(storeIncomeDetails.reduce((sum, it) => sum + it.amount, 0));
-      const balanceTotal = round((storeBalanceDetails ?? []).reduce((sum, it) => sum + it.amount, 0));
-      return {
-        balanceTotal,
-        expenseTotal,
-        incomeTotal,
-        balanceDetails: storeBalanceDetails,
-        expenseDetails: storeExpenseDetails,
-        incomeDetails: storeIncomeDetails,
-      };
+  const transactions: Transaction[] = useMemo(
+    () =>
+      expenses.map((expense) => {
+        const groupName =
+          groups.find((g) => g.id === expense.groupId)?.name ?? "Group";
+        return {
+          id: expense.id,
+          title: expense.name,
+          amount: formatMoney(expense.amount),
+          date: expense.date,
+          paidBy: `${groupName} · paid by ${getName(expense.payerId)}`,
+        };
+      }),
+    [expenses, groups, contacts],
+  );
+
+  const filteredTransactions = useMemo(() => {
+    if (!searchQuery.trim()) return transactions;
+    const q = searchQuery.toLowerCase();
+    return transactions.filter((t) =>
+      `${t.title} ${t.paidBy}`.toLowerCase().includes(q),
+    );
+  }, [transactions, searchQuery]);
+
+  const { expenseItems, incomeItems } = useMemo(() => {
+    const owedToMeMap: Record<
+      string,
+      { total: number; groupId: string; names: string[]; fromId: string }
+    > = {};
+    const iOweMap: Record<
+      string,
+      { total: number; groupId: string; names: string[]; toId: string }
+    > = {};
+
+    for (const exp of expenses) {
+      const iAmPayer = exp.payerId === SELF_CONTACT_ID;
+
+      if (iAmPayer) {
+        for (const split of exp.splits) {
+          if (split.contactId === SELF_CONTACT_ID) continue;
+          const id = split.contactId;
+          if (!owedToMeMap[id])
+            owedToMeMap[id] = {
+              total: 0,
+              groupId: exp.groupId,
+              names: [],
+              fromId: id,
+            };
+          owedToMeMap[id].total += split.amount;
+          owedToMeMap[id].names.push(exp.name);
+        }
+      } else {
+        const mySplit = exp.splits.find((s) => s.contactId === SELF_CONTACT_ID);
+        if (mySplit) {
+          const id = exp.payerId;
+          if (!iOweMap[id])
+            iOweMap[id] = {
+              total: 0,
+              groupId: exp.groupId,
+              names: [],
+              toId: id,
+            };
+          iOweMap[id].total += mySplit.amount;
+          iOweMap[id].names.push(exp.name);
+        }
+      }
     }
 
-    return buildPersonalSummary(expenses, groups, contacts, currentContactId);
-  }, [storeBalanceDetails, storeExpenseDetails, storeIncomeDetails, contacts, currentContactId, expenses, groups]);
+    // Odejmij rozliczone płatności
+    for (const settled of settledDebts) {
+      // Ktoś zapłacił mnie → zmniejsz owedToMeMap
+      if (settled.toId === SELF_CONTACT_ID && owedToMeMap[settled.fromId]) {
+        owedToMeMap[settled.fromId].total = Math.max(
+          0,
+          owedToMeMap[settled.fromId].total - settled.amount,
+        );
+      }
+      // Ja zapłaciłem komuś → zmniejsz iOweMap
+      if (settled.fromId === SELF_CONTACT_ID && iOweMap[settled.toId]) {
+        iOweMap[settled.toId].total = Math.max(
+          0,
+          iOweMap[settled.toId].total - settled.amount,
+        );
+      }
+    }
+
+    const expItems: SettlementItem[] = Object.values(owedToMeMap)
+      .filter((e) => e.total > 0.009)
+      .map((e) => ({
+        label: getName(e.fromId),
+        amount: parseFloat(e.total.toFixed(2)),
+        rawAmount: parseFloat(e.total.toFixed(2)),
+        meta: e.names.join(", "),
+        groupId: e.groupId,
+        fromId: e.fromId,
+        toId: SELF_CONTACT_ID,
+      }));
+
+    const incItems: SettlementItem[] = Object.values(iOweMap)
+      .filter((e) => e.total > 0.009)
+      .map((e) => ({
+        label: getName(e.toId),
+        amount: -parseFloat(e.total.toFixed(2)),
+        rawAmount: parseFloat(e.total.toFixed(2)),
+        meta: e.names.join(", "),
+        groupId: e.groupId,
+        fromId: SELF_CONTACT_ID,
+        toId: e.toId,
+      }));
+
+    return { expenseItems: expItems, incomeItems: incItems };
+  }, [expenses, contacts, settledDebts]);
+
+  const expenseTotal = useMemo(
+    () =>
+      parseFloat(expenseItems.reduce((s, i) => s + i.rawAmount, 0).toFixed(2)),
+    [expenseItems],
+  );
+
+  const incomeTotal = useMemo(
+    () =>
+      parseFloat(incomeItems.reduce((s, i) => s + i.rawAmount, 0).toFixed(2)),
+    [incomeItems],
+  );
+
+  const balanceTotal = parseFloat((expenseTotal - incomeTotal).toFixed(2));
+
+  const balanceDetails: SummaryItem[] = useMemo(
+    () => [
+      ...expenseItems.map((i) => ({ ...i, meta: `${i.label} owes you` })),
+      ...incomeItems.map((i) => ({ ...i, meta: `you owe ${i.label}` })),
+    ],
+    [expenseItems, incomeItems],
+  );
 
   const cardData: SummaryCard[] = useMemo(
     () => [
       {
         id: "balance",
         title: "Balance",
-        value: formatMoney(personalSummary.balanceTotal),
+        value: formatMoney(balanceTotal),
         subtitle: "Net",
-        description: `Your net position based on shared expenses for ${SELF_CONTACT_LABEL}.`,
-        details: personalSummary.balanceDetails,
-        tone: "neutral",
+        description:
+          "Your overall net position — what others owe you minus what you owe others.",
+        details: balanceDetails,
       },
       {
         id: "expenses",
-        title: "Expenses",
-        // show as negative value to make intent clear in UI
-        value: formatMoney(-personalSummary.expenseTotal),
-        subtitle: "You owe",
-        description: "Amounts you owe to other people from shared expenses.",
-        details: personalSummary.expenseDetails,
-        tone: "danger",
+        title: "Owed to you",
+        value: formatMoney(expenseTotal),
+        subtitle: "Owed to you",
+        description:
+          "You paid for these expenses — here's who owes you their share.",
+        details: expenseItems,
       },
-
       {
         id: "income",
-        title: "Income",
-        value: formatMoney(personalSummary.incomeTotal),
-        subtitle: "Owes you",
-        description: "Amounts other people owe you from expenses you paid.",
-        details: personalSummary.incomeDetails,
-        tone: "success",
+        title: "You owe",
+        value: formatMoney(-incomeTotal),
+        subtitle: "You owe",
+        description: "Someone else paid — here's what you owe them.",
+        details: incomeItems,
       },
     ],
     [
-      personalSummary.balanceDetails,
-      personalSummary.balanceTotal,
-      personalSummary.expenseDetails,
-      personalSummary.expenseTotal,
-      personalSummary.incomeDetails,
-      personalSummary.incomeTotal,
+      balanceTotal,
+      balanceDetails,
+      expenseTotal,
+      expenseItems,
+      incomeTotal,
+      incomeItems,
     ],
   );
 
-  const transactions: Transaction[] = useMemo(
-    () =>
-      expenses.map((expense) => {
-        const groupName =
-          groups.find((group) => group.id === expense.groupId)?.name ?? "Group";
-        const payerName =
-          expense.payerId === SELF_CONTACT_ID
-            ? SELF_CONTACT_LABEL
-            : contacts.find((contact) => contact.id === expense.payerId)?.name ??
-              "Unknown";
-        const currentShare = splitAmountForCurrentUser(expense, currentContactId);
-        const currentPayer = currentContactId === expense.payerId;
-
-        if (currentPayer) {
-          return {
-            id: expense.id,
-            title: expense.name,
-            amount: `+${formatMoney(currentShare)}`,
-            date: expense.date,
-            meta: `${groupName} - paid by me`,
-            tone: "success" as const,
-          };
-        }
-
-        if (currentShare > 0) {
-          return {
-            id: expense.id,
-            title: expense.name,
-            amount: `-${formatMoney(currentShare)}`,
-            date: expense.date,
-            meta: `${groupName} - paid by ${payerName}`,
-            tone: "danger" as const,
-          };
-        }
-
-        return {
-          id: expense.id,
-          title: expense.name,
-          amount: formatMoney(expense.amount),
-          date: expense.date,
-          meta: `${groupName} - paid by ${payerName}`,
-          tone: "neutral" as const,
-        };
-      }),
-    [contacts, currentContactId, expenses, groups],
+  const selectedCard = useMemo(
+    () => cardData.find((c) => c.id === selectedCardId) ?? null,
+    [cardData, selectedCardId],
   );
 
-  const filteredTransactions = useMemo(() => {
-    if (!searchQuery.trim()) return transactions;
+  const selectedItems = (selectedCard?.details ?? []) as SettlementItem[];
 
-    const query = searchQuery.toLowerCase();
-    return transactions.filter((item) =>
-      `${item.title} ${item.meta}`.toLowerCase().includes(query),
+  const handleMarkPaid = (item: SettlementItem) => {
+    console.log("handleMarkPaid", item); // ← dodaj to tymczasowo
+    if (!item.groupId || !item.fromId || !item.toId) {
+      console.warn("Missing groupId/fromId/toId — bail", item);
+      return;
+    }
+    dispatch(
+      markSettlementPaid({
+        groupId: item.groupId,
+        fromId: item.fromId,
+        toId: item.toId,
+        amount: item.rawAmount,
+      }),
     );
-  }, [transactions, searchQuery]);
+    setConfirmingKey(null);
+  };
 
   const handleNewExpenseSave = (data: {
     name: string;
@@ -193,7 +263,6 @@ export default function DashboardPage() {
   }) => {
     const amount = Number.parseFloat(data.amount.replace(/[^0-9.-]/g, ""));
     if (Number.isNaN(amount)) return;
-
     dispatch(
       addExpense({
         name: data.name,
@@ -228,11 +297,9 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-semibold text-text">
                     Search results
                   </h2>
-
                   <p className="mt-2 text-sm text-text/70">
                     Results for "{searchQuery}"
                   </p>
-
                   <div className="mt-6 space-y-3">
                     {filteredTransactions.length > 0 ? (
                       filteredTransactions.map((item) => (
@@ -244,19 +311,14 @@ export default function DashboardPage() {
                             <div className="font-semibold text-text">
                               {item.title}
                             </div>
-                            <div className="text-sm text-text/60">{item.meta}</div>
-                            <div className="text-sm text-text/60">{item.date}</div>
+                            <div className="text-sm text-text/60">
+                              {item.paidBy}
+                            </div>
+                            <div className="text-sm text-text/60">
+                              {item.date}
+                            </div>
                           </div>
-
-                          <div
-                            className={`font-semibold ${
-                              item.tone === "success"
-                                ? "text-emerald-400"
-                                : item.tone === "danger"
-                                  ? "text-rose-400"
-                                  : "text-text"
-                            }`}
-                          >
+                          <div className="font-semibold text-text">
                             {item.amount}
                           </div>
                         </div>
@@ -272,50 +334,45 @@ export default function DashboardPage() {
             ) : (
               <section className="grid gap-6 xl:grid-cols-[2fr_1fr]">
                 <div className="space-y-6">
-                  <SummaryCards cards={cardData} onCardClick={setSelectedCard} />
+                  <SummaryCards
+                    cards={cardData}
+                    onCardClick={(card) => {
+                      setSelectedCardId(card.id);
+                      setConfirmingKey(null);
+                    }}
+                  />
 
                   <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-semibold text-text">
-                          Recent activity
-                        </h2>
-
-                        <p className="mt-1 text-sm text-text/70">
-                          Latest transactions and expense history.
-                        </p>
-                      </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-text">
+                        Recent activity
+                      </h2>
+                      <p className="mt-1 text-sm text-text/70">
+                        Latest transactions and expense history.
+                      </p>
                     </div>
-
-                    <div className="mt-5">
-                      <div className="space-y-3">
-                        {transactions.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4"
-                          >
-                            <div>
-                              <div className="font-semibold text-text">
-                                {item.title}
-                              </div>
-                              <div className="text-sm text-text/60">{item.meta}</div>
-                              <div className="text-sm text-text/60">{item.date}</div>
+                    <div className="mt-5 space-y-3">
+                      {transactions.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4"
+                        >
+                          <div>
+                            <div className="font-semibold text-text">
+                              {item.title}
                             </div>
-
-                            <div
-                              className={`font-semibold ${
-                                item.tone === "success"
-                                  ? "text-emerald-400"
-                                  : item.tone === "danger"
-                                    ? "text-rose-400"
-                                    : "text-text"
-                              }`}
-                            >
-                              {item.amount}
+                            <div className="text-sm text-text/60">
+                              {item.paidBy}
+                            </div>
+                            <div className="text-sm text-text/60">
+                              {item.date}
                             </div>
                           </div>
-                        ))}
-                      </div>
+                          <div className="font-semibold text-text">
+                            {item.amount}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -325,21 +382,18 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-semibold text-text">
                       Quick insights
                     </h2>
-
                     <p className="mt-3 text-sm text-text/70">
                       Click any summary card to learn more about what the value
                       means.
                     </p>
-
                     <div className="mt-6 space-y-3">
-                      <div className="rounded-3xl bg-rose-500/10 p-4 text-sm text-rose-200">
-                        Expenses are shown in red because they reduce what you
-                        owe.
+                      <div className="rounded-3xl bg-accent/5 p-4 text-sm text-text/80">
+                        Keep your expenses under control and track income trends
+                        from this dashboard.
                       </div>
-
-                      <div className="rounded-3xl bg-emerald-500/10 p-4 text-sm text-emerald-200">
-                        Income is shown in green because it increases what
-                        others owe you.
+                      <div className="rounded-3xl bg-accent/5 p-4 text-sm text-text/80">
+                        Use + New expense to quickly add a transaction
+                        placeholder.
                       </div>
                     </div>
                   </div>
@@ -354,7 +408,7 @@ export default function DashboardPage() {
         open={isNewExpenseOpen}
         groups={groups}
         contacts={contacts}
-        currentContactId={currentContactId}
+        currentContactId={SELF_CONTACT_ID}
         onClose={() => setIsNewExpenseOpen(false)}
         onSave={handleNewExpenseSave}
       />
@@ -362,45 +416,106 @@ export default function DashboardPage() {
       <Modal
         open={Boolean(selectedCard)}
         title={selectedCard?.title ?? "Info"}
-        onClose={() => setSelectedCard(null)}
+        onClose={() => {
+          setSelectedCardId(null);
+          setConfirmingKey(null);
+        }}
       >
         <div className="space-y-4">
           <p className="text-sm leading-7 text-text/80">
             {selectedCard?.description}
           </p>
+
           <div className="space-y-3 pt-3">
-            {selectedCard?.details.map((item) => {
-              const formatted = formatMoney(item.amount);
+            {selectedItems.length === 0 && (
+              <div className="rounded-3xl border border-dashed border-slate-200 p-8 text-center text-slate-400">
+                🎉 All settled up!
+              </div>
+            )}
+
+            {selectedItems.map((item, i) => {
+              const key = `${item.fromId}-${item.toId}-${i}`;
+              const isConfirming = confirmingKey === key;
+              const canSettle =
+                selectedCardId === "income" || selectedCardId === "expenses";
+
+              // expenses card = green (owed TO you), income card = red (you owe)
+              const amountColor =
+                selectedCardId === "expenses"
+                  ? "text-emerald-600"
+                  : selectedCardId === "income"
+                    ? "text-rose-500"
+                    : item.amount >= 0
+                      ? "text-emerald-600"
+                      : "text-rose-500";
+
+              const amountPrefix =
+                selectedCardId === "expenses"
+                  ? "+"
+                  : selectedCardId === "income"
+                    ? "-"
+                    : item.amount >= 0
+                      ? "+"
+                      : "-";
+
               return (
                 <div
-                  key={item.label}
-                  className="flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4"
+                  key={key}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                 >
-                  <div>
-                    <div className="font-medium text-text">{item.label}</div>
-                    {item.meta && (
-                      <div className="text-sm text-slate-500">{item.meta}</div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`font-semibold ${item.amount < 0 ? "text-rose-500" : "text-emerald-500"}`}
-                    >
-                      {formatted}
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-slate-800">
+                        {item.label}
+                      </div>
+                      {item.meta && (
+                        <div className="text-xs text-slate-400 mt-0.5">
+                          {item.meta}
+                        </div>
+                      )}
                     </div>
-                    {(selectedCard?.id === "income" || selectedCard?.id === "expenses") && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selectedCard?.id === "income") dispatch(removeIncomeDetail(item.label));
-                          else dispatch(removeExpenseDetail(item.label));
-                        }}
-                        className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-500 hover:bg-emerald-500/20"
-                      >
-                        Paid
-                      </button>
-                    )}
+                    <div
+                      className={`text-sm font-bold shrink-0 ${amountColor}`}
+                    >
+                      {amountPrefix}€{Math.abs(item.rawAmount).toFixed(2)}
+                    </div>
                   </div>
+
+                  {canSettle && (
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                      {isConfirming ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-slate-500">
+                            Confirm this payment was made?
+                          </span>
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmingKey(null)}
+                              className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMarkPaid(item)}
+                              className="cursor-pointer rounded-lg bg-accent-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-dark/90 transition-colors"
+                            >
+                              Confirm
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingKey(key)}
+                          className="cursor-pointer rounded-lg bg-accent-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-dark/90 transition-colors"
+                        >
+                          Mark as paid
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

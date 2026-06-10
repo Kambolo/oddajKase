@@ -226,9 +226,6 @@ export default function GroupSummaryModal({
                         <div className="font-bold text-slate-800">
                           €{exp.amount.toFixed(2)}
                         </div>
-                        <div className="text-xs text-slate-400">
-                          €{perPerson.toFixed(2)}/person
-                        </div>
                       </div>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">

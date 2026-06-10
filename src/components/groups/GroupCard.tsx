@@ -82,16 +82,6 @@ export default function GroupCard({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onEdit();
-          }}
-          className="cursor-pointer inline-flex items-center justify-center rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-        >
-          Edit members
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
             onDelete();
           }}
           className="cursor-pointer inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
