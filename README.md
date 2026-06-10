@@ -11,7 +11,8 @@
 
 - **React** (Vite) — component-based UI with fast HMR
 - **Firebase** — authentication (email/password + Google OAuth) and data storage
-- **Google Analytics** — usage tracking via `VITE_GA_MEASUREMENT_ID`
+- **Google Analytics** — usage tracking
+- **Hotjar** — session recordings and heatmaps to visualize user behaviour
 - Deployed on **Vercel**
 
 ---
@@ -34,15 +35,14 @@ cp .example.env .env
 
 Required variables in `.env`:
 
-| Variable                            | Description                     |
-| ----------------------------------- | ------------------------------- |
-| `VITE_FIREBASE_API_KEY`             | Firebase API key                |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain            |
-| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID             |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket         |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID    |
-| `VITE_FIREBASE_APP_ID`              | Firebase app ID                 |
-| `VITE_GA_MEASUREMENT_ID`            | Google Analytics measurement ID |
+| Variable                            | Description                  |
+| ----------------------------------- | ---------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase API key             |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain         |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase project ID          |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase storage bucket      |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `VITE_FIREBASE_APP_ID`              | Firebase app ID              |
 
 ### 3. Start the development server
 
@@ -84,11 +84,11 @@ Click any card to drill into the details.
 
 #### What you owe
 
-![You owe details](readme_images/image-5.png)
+![You owe details](readme_images/image-4.png)
 
 #### What others owe you
 
-![Owed to you details](readme_images/image-4.png)
+![Owed to you details](readme_images/image-5.png)
 
 ---
 
@@ -183,3 +183,35 @@ The expense then appears on the dashboard...
 ...and in the group's expense list.
 
 ![Expense in group](readme_images/image-22.png)
+
+---
+
+## Google Analytics
+
+The app uses Google Analytics 4 (GA4) to track usage. The tracking script is added directly in `index.html` inside `<head>`:
+
+```html
+<!-- Google tag (gtag.js) -->
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-87D2MGMDTC"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+
+  gtag("config", "G-87D2MGMDTC");
+</script>
+```
+
+Replace `G-87D2MGMDTC` with your own Measurement ID from the GA4 property settings.
+
+### Verifying it works — Realtime report
+
+Go to **Reports → Realtime** in Google Analytics. Open the deployed app in another tab (with adblockres disabled) and you should see yourself appear as an active user within ~30 seconds.
+
+![GA Realtime panel](readme_images/image-23.png)
+![alt text](readme_images/image-30.png)
